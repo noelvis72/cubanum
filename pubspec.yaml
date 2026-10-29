@@ -26,11 +26,11 @@ dependencies:
   # Exportación y compartir
   pdf: ^3.11.0
   printing: ^5.13.1
-  syncfusion_flutter_xlsio: ^35.0.0   # <-- ACTUALIZADO: acepta intl 0.20.x
+  syncfusion_flutter_xlsio: ^35.0.0
   share_plus: ^10.1.4
 
   # Utilidades
-  intl: ^0.20.3                       # <-- MANTENIDO: alineado con flutter_localizations
+  intl: any                         # <-- CAMBIO: deja que flutter_localizations decida
   provider: ^6.1.2
   google_fonts: ^6.2.1
 
