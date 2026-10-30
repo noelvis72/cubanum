@@ -417,7 +417,7 @@ class ExportService {
       sheet.autoFitColumn(c + 1);
     }
 
-    final bytes = workbook.save();
+    final bytes = await workbook.save();
     workbook.dispose();
 
     final archivo = await _prepararDestino('xlsx', rutaDestino: rutaDestino);
