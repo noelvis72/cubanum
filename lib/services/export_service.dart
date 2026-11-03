@@ -235,7 +235,6 @@ class ExportService {
     if (m.fechaCompra != null) {
       addFila('Fecha compra', _fmtFecha.format(m.fechaCompra!));
     }
-    addFila('Proveedor', m.proveedor);
     addFila('Lugar compra', m.lugarCompra);
     if (m.valorEstimado != null) {
       addFila('Valor estimado', '${_numATexto(m.valorEstimado!)} ${m.monedaPrecio}');
@@ -247,7 +246,6 @@ class ExportService {
       addFila('Fecha venta', _fmtFecha.format(m.fechaVenta!));
     }
     addFila('Ubicación', m.ubicacion);
-    addFila('Etiquetas', m.etiquetas);
     addFila('Notas', m.notas);
 
     final columnaFotos = pw.Column(
@@ -359,14 +357,12 @@ class ExportService {
       ('Autenticidad', (m) => m.autenticidad, 'text'),
       ('Precio compra', (m) => m.precioCompra?.toString() ?? '', 'num'),
       ('Moneda precio', (m) => m.monedaPrecio, 'text'),
-      ('Proveedor', (m) => m.proveedor, 'text'),
       ('Lugar compra', (m) => m.lugarCompra, 'text'),
       ('Fecha compra', (m) => m.fechaCompra?.toIso8601String() ?? '', 'date'),
       ('Valor estimado', (m) => m.valorEstimado?.toString() ?? '', 'num'),
       ('Precio venta', (m) => m.precioVenta?.toString() ?? '', 'num'),
       ('Fecha venta', (m) => m.fechaVenta?.toIso8601String() ?? '', 'date'),
       ('Ubicación', (m) => m.ubicacion, 'text'),
-      ('Etiquetas', (m) => m.etiquetas, 'text'),
       ('Notas', (m) => m.notas, 'text'),
     ];
 
