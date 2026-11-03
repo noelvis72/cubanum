@@ -38,12 +38,10 @@ class _FormScreenState extends State<FormScreen> {
   late final TextEditingController _cantoCtrl;
   late final TextEditingController _detallesCtrl;
   late final TextEditingController _precioCompraCtrl;
-  late final TextEditingController _proveedorCtrl;
   late final TextEditingController _lugarCompraCtrl;
   late final TextEditingController _valorEstimadoCtrl;
   late final TextEditingController _precioVentaCtrl;
   late final TextEditingController _ubicacionCtrl;
-  late final TextEditingController _etiquetasCtrl;
   late final TextEditingController _notasCtrl;
 
   bool _perteneceOnu = false;
@@ -94,12 +92,10 @@ class _FormScreenState extends State<FormScreen> {
     _cantoCtrl         = TextEditingController(text: m?.canto ?? '');
     _detallesCtrl      = TextEditingController(text: m?.detallesVisibles ?? '');
     _precioCompraCtrl  = TextEditingController(text: _numATexto(m?.precioCompra));
-    _proveedorCtrl     = TextEditingController(text: m?.proveedor ?? '');
     _lugarCompraCtrl   = TextEditingController(text: m?.lugarCompra ?? '');
     _valorEstimadoCtrl = TextEditingController(text: _numATexto(m?.valorEstimado));
     _precioVentaCtrl   = TextEditingController(text: _numATexto(m?.precioVenta));
     _ubicacionCtrl     = TextEditingController(text: m?.ubicacion ?? '');
-    _etiquetasCtrl     = TextEditingController(text: m?.etiquetas ?? '');
     _notasCtrl         = TextEditingController(text: m?.notas ?? '');
 
     _perteneceOnu = m?.perteneceOnu ?? false;
@@ -128,8 +124,8 @@ class _FormScreenState extends State<FormScreen> {
       _paisCtrl, _periodoCtrl, _denominacionCtrl, _anioCtrl, _cecaCtrl,
       _kmCtrl, _metalCtrl, _pesoCtrl, _diametroCtrl, _grosorCtrl,
       _formaCtrl, _cantoCtrl, _detallesCtrl, _precioCompraCtrl,
-      _proveedorCtrl, _lugarCompraCtrl, _valorEstimadoCtrl,
-      _precioVentaCtrl, _ubicacionCtrl, _etiquetasCtrl, _notasCtrl,
+      _lugarCompraCtrl, _valorEstimadoCtrl,
+      _precioVentaCtrl, _ubicacionCtrl, _notasCtrl,
     ]) {
       c.dispose();
     }
@@ -253,7 +249,6 @@ class _FormScreenState extends State<FormScreen> {
       autenticidad: _autenticidad,
       precioCompra: pCompraVal,
       monedaPrecio: _monedaPrecio,
-      proveedor: _proveedorCtrl.text.trim(),
       lugarCompra: _lugarCompraCtrl.text.trim(),
       fechaCompra: _fechaCompra,
       valorEstimado: vEstimadoVal,
@@ -264,7 +259,6 @@ class _FormScreenState extends State<FormScreen> {
       fotoCanto: _fotoCanto,
       fotoKm: _fotoKm,
       notas: _notasCtrl.text.trim(),
-      etiquetas: _etiquetasCtrl.text.trim(),
       ubicacion: _ubicacionCtrl.text.trim(),
       limpiarPesoG: pesoVal == null,
       limpiarDiametroMm: diametroVal == null,
@@ -538,11 +532,6 @@ class _FormScreenState extends State<FormScreen> {
                         : () => setState(() => _fechaCompra = null),
                   ),
                   _TextoForm(
-                    controller: _proveedorCtrl,
-                    etiqueta: 'Proveedor',
-                    icono: Icons.person_outline,
-                  ),
-                  _TextoForm(
                     controller: _lugarCompraCtrl,
                     etiqueta: 'Lugar de compra',
                     icono: Icons.place_outlined,
@@ -619,11 +608,6 @@ class _FormScreenState extends State<FormScreen> {
                     controller: _ubicacionCtrl,
                     etiqueta: 'Ubicación en la colección',
                     icono: Icons.shelves,
-                  ),
-                  _TextoForm(
-                    controller: _etiquetasCtrl,
-                    etiqueta: 'Etiquetas (separadas por comas)',
-                    icono: Icons.local_offer_outlined,
                   ),
                   _TextoForm(
                     controller: _notasCtrl,
