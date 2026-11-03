@@ -9,8 +9,10 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbNombre = 'cubanum.db';
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
   static const String tablaMonedas = 'monedas';
+  static const String tablaPaises = 'paises_personalizados';
+  static const String tablaMetales = 'metales_personalizados';
 
   Database? _db;
 
@@ -39,40 +41,59 @@ class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tablaMonedas (
-        id                INTEGER PRIMARY KEY AUTOINCREMENT,
-        pais              TEXT    NOT NULL DEFAULT '',
-        pertenece_onu     INTEGER NOT NULL DEFAULT 0,
-        periodo_acunacion TEXT    NOT NULL DEFAULT '',
-        denominacion      TEXT    NOT NULL DEFAULT '',
-        anio              TEXT    NOT NULL DEFAULT '',
-        ceca              TEXT    NOT NULL DEFAULT '',
-        km_catalogo       TEXT    NOT NULL DEFAULT '',
-        metal             TEXT    NOT NULL DEFAULT '',
-        peso_g            REAL,
-        diametro_mm       REAL,
-        grosor_mm         REAL,
-        forma             TEXT    NOT NULL DEFAULT '',
-        canto             TEXT    NOT NULL DEFAULT '',
-        grado_sheldon     TEXT    NOT NULL DEFAULT '',
-        detalles_visibles TEXT    NOT NULL DEFAULT '',
-        autenticidad      TEXT    NOT NULL DEFAULT 'Original',
-        precio_compra     REAL,
-        moneda_precio     TEXT    NOT NULL DEFAULT 'EUR',
-        proveedor         TEXT    NOT NULL DEFAULT '',
-        lugar_compra      TEXT    NOT NULL DEFAULT '',
-        fecha_compra      TEXT,
-        valor_estimado    REAL,
-        precio_venta      REAL,
-        fecha_venta       TEXT,
-        foto_anverso      TEXT,
-        foto_reverso      TEXT,
-        foto_canto        TEXT,
-        foto_km           TEXT,
-        notas             TEXT    NOT NULL DEFAULT '',
-        etiquetas         TEXT    NOT NULL DEFAULT '',
-        ubicacion         TEXT    NOT NULL DEFAULT ''
+        id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+        pais                   TEXT    NOT NULL DEFAULT '',
+        pertenece_onu          INTEGER NOT NULL DEFAULT 0,
+        conmemorativa          INTEGER NOT NULL DEFAULT 0,
+        fao                    INTEGER NOT NULL DEFAULT 0,
+        periodo_acunacion      TEXT    NOT NULL DEFAULT '',
+        denominacion           TEXT    NOT NULL DEFAULT '',
+        anio                   TEXT    NOT NULL DEFAULT '',
+        ceca                   TEXT    NOT NULL DEFAULT '',
+        km_catalogo            TEXT    NOT NULL DEFAULT '',
+        acunadas               INTEGER,
+        peso_g                 REAL,
+        diametro_mm            REAL,
+        grosor_mm              REAL,
+        forma                  TEXT    NOT NULL DEFAULT '',
+        metal                  TEXT    NOT NULL DEFAULT '',
+        ley                    TEXT    NOT NULL DEFAULT '',
+        canto                  TEXT    NOT NULL DEFAULT '',
+        alineacion             TEXT    NOT NULL DEFAULT '',
+        grado_sheldon          TEXT    NOT NULL DEFAULT '',
+        detalles_visibles      TEXT    NOT NULL DEFAULT '',
+        autenticidad           TEXT    NOT NULL DEFAULT 'Original',
+        precio_compra          REAL,
+        moneda_precio          TEXT    NOT NULL DEFAULT 'CUP',
+        lugar_compra           TEXT    NOT NULL DEFAULT '',
+        fecha_compra           TEXT,
+        valor_estimado         REAL,
+        valor_estimado_moneda  TEXT    NOT NULL DEFAULT 'CUP',
+        precio_venta           REAL,
+        fecha_venta            TEXT,
+        foto_anverso           TEXT,
+        foto_reverso           TEXT,
+        foto_canto             TEXT,
+        foto_km                TEXT,
+        notas                  TEXT    NOT NULL DEFAULT '',
+        ubicacion              TEXT    NOT NULL DEFAULT ''
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE $tablaPaises (
+        id     INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $tablaMetales (
+        id     INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE
+      )
+    ''');
+
     await db.execute('CREATE INDEX idx_monedas_pais ON $tablaMonedas(pais)');
     await db.execute('CREATE INDEX idx_monedas_denominacion ON $tablaMonedas(denominacion)');
     await db.execute('CREATE INDEX idx_monedas_anio ON $tablaMonedas(anio)');
@@ -80,8 +101,33 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Migraciones futuras.
+    // v1 -> v2: nuevos campos y tablas de listas personalizadas.
+    // Nota: proveedor y etiquetas se dejan físicamente en la tabla (SQLite
+    // antiguo no permite DROP COLUMN) pero ya no se usan desde el modelo.
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN conmemorativa INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN fao INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN acunadas INTEGER');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN ley TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN alineacion TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN valor_estimado_moneda TEXT NOT NULL DEFAULT "CUP"');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tablaPaises (
+          id     INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL UNIQUE
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tablaMetales (
+          id     INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL UNIQUE
+        )
+      ''');
+    }
   }
+
+  // ---------------- Monedas ----------------
 
   Future<int> insertar(Moneda moneda) async {
     final db = await database;
@@ -158,6 +204,62 @@ class DatabaseHelper {
     final db = await database;
     await db.delete(tablaMonedas);
   }
+
+  // ---------------- Países personalizados ----------------
+
+  Future<int> insertarPaisPersonalizado(String nombre) async {
+    final db = await database;
+    final n = nombre.trim();
+    if (n.isEmpty) return -1;
+    return db.insert(
+      tablaPaises,
+      {'nombre': n},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  Future<List<String>> obtenerPaisesPersonalizados() async {
+    final db = await database;
+    final rows = await db.query(
+      tablaPaises,
+      orderBy: 'nombre COLLATE NOCASE ASC',
+    );
+    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+  }
+
+  Future<int> eliminarPaisPersonalizado(String nombre) async {
+    final db = await database;
+    return db.delete(tablaPaises, where: 'nombre = ?', whereArgs: [nombre]);
+  }
+
+  // ---------------- Metales personalizados ----------------
+
+  Future<int> insertarMetalPersonalizado(String nombre) async {
+    final db = await database;
+    final n = nombre.trim();
+    if (n.isEmpty) return -1;
+    return db.insert(
+      tablaMetales,
+      {'nombre': n},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  Future<List<String>> obtenerMetalesPersonalizados() async {
+    final db = await database;
+    final rows = await db.query(
+      tablaMetales,
+      orderBy: 'nombre COLLATE NOCASE ASC',
+    );
+    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+  }
+
+  Future<int> eliminarMetalPersonalizado(String nombre) async {
+    final db = await database;
+    return db.delete(tablaMetales, where: 'nombre = ?', whereArgs: [nombre]);
+  }
+
+  // ---------------- Utilidades ----------------
 
   Future<void> cerrar() async {
     await _db?.close();
