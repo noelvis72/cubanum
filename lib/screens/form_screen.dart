@@ -24,18 +24,19 @@ class _FormScreenState extends State<FormScreen> {
   final _picker = ImagePicker();
   final _db = DatabaseHelper.instance;
 
-  late final TextEditingController _paisCtrl;
+  // ---- Controladores de texto ----
+  late final TextEditingController _paisCtrl; // solo se usa para "OTRO" manual legacy
   late final TextEditingController _periodoCtrl;
   late final TextEditingController _denominacionCtrl;
   late final TextEditingController _anioCtrl;
   late final TextEditingController _cecaCtrl;
   late final TextEditingController _kmCtrl;
-  late final TextEditingController _metalCtrl;
+  late final TextEditingController _metalCtrl; // solo "OTRO" manual
+  late final TextEditingController _acunadasCtrl;
   late final TextEditingController _pesoCtrl;
   late final TextEditingController _diametroCtrl;
   late final TextEditingController _grosorCtrl;
-  late final TextEditingController _formaCtrl;
-  late final TextEditingController _cantoCtrl;
+  late final TextEditingController _leyCtrl;
   late final TextEditingController _detallesCtrl;
   late final TextEditingController _precioCompraCtrl;
   late final TextEditingController _lugarCompraCtrl;
@@ -44,33 +45,147 @@ class _FormScreenState extends State<FormScreen> {
   late final TextEditingController _ubicacionCtrl;
   late final TextEditingController _notasCtrl;
 
+  // ---- Estado no textual ----
   bool _perteneceOnu = false;
-  String? _periodoAcunacion;
+  bool _conmemorativa = false;
+  bool _fao = false;
+  String? _paisSeleccionado;
+  String? _formaSeleccionada;
+  String? _metalSeleccionado;
+  String? _cantoSeleccionado;
+  String? _alineacionSeleccionada;
   String? _gradoSheldon;
   String _autenticidad = 'Original';
-  String _monedaPrecio = 'EUR';
+  String _monedaPrecio = 'CUP';
+  String _valorEstimadoMoneda = 'CUP';
+
   DateTime? _fechaCompra;
   DateTime? _fechaVenta;
+
   String? _fotoAnverso;
   String? _fotoReverso;
   String? _fotoCanto;
   String? _fotoKm;
+
   bool _guardando = false;
 
-  static const _periodos = <String>[
-    'Colonial', 'Republicano', 'Medieval', 'Moderno', 'Contemporáneo', 'Otro',
+  // ---- Listas personalizadas cargadas de BD ----
+  List<String> _paisesPersonalizados = [];
+  List<String> _metalesPersonalizados = [];
+
+  // ---- Listas fijas ----
+  static const _formas = <String>[
+    'Redonda',
+    'Triangular',
+    'Cuadrada',
+    'Ovalada',
+    'Rectangular',
+    'Múltiples lados',
   ];
+
+  static const _cantos = <String>[
+    'Estriado',
+    'Serrado',
+    'Epigráfico con leyenda',
+    'Estriado interrumpido',
+    'Reticulado',
+    'Acanalado',
+    'En espiguilla',
+  ];
+
+  static const _alineaciones = <String>['Medalla', 'Moneda'];
+
+  static const _metalesBase = <String>[
+    'Oro',
+    'Plata',
+    'Cobre',
+    'Bronce',
+    'Latón',
+    'CuNi',
+    'Aluminio',
+    'Zinc',
+    'Hierro',
+    'Platino',
+    'Bimetálica',
+    'Trimetálica',
+    'Acero recubierto',
+  ];
+
   static const _gradosSheldon = <String>[
     'Poor', 'Fair', 'About Good', 'Good', 'Very Good',
     'Fine', 'Very Fine', 'Extremely Fine', 'About Uncirculated', 'Mint State',
   ];
+
   static const _autenticidades = <String>[
     'Original', 'Falsificación de época', 'Réplica moderna',
   ];
+
   static const _monedasPrecio = <String>['EUR', 'USD', 'CUP'];
+
+  /// Lista extensa de países (base ISO + territorios y países históricos comunes).
+  /// Los añadidos por el usuario se guardan aparte en BD.
+  static const _paisesBase = <String>[
+    'Afganistán', 'Albania', 'Alemania', 'Andorra', 'Angola',
+    'Antigua y Barbuda', 'Arabia Saudita', 'Argelia', 'Argentina', 'Armenia',
+    'Australia', 'Austria', 'Azerbaiyán', 'Bahamas', 'Bangladés',
+    'Barbados', 'Baréin', 'Bélgica', 'Belice', 'Benín',
+    'Bielorrusia', 'Bolivia', 'Bosnia y Herzegovina', 'Botsuana', 'Brasil',
+    'Brunéi', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Bután',
+    'Cabo Verde', 'Camboya', 'Camerún', 'Canadá', 'Catar',
+    'Chad', 'Chequia', 'Chile', 'China', 'Chipre',
+    'Colombia', 'Comoras', 'Corea del Norte', 'Corea del Sur', 'Costa de Marfil',
+    'Costa Rica', 'Croacia', 'Cuba', 'Dinamarca', 'Dominica',
+    'Ecuador', 'Egipto', 'El Salvador', 'Emiratos Árabes Unidos', 'Eritrea',
+    'Eslovaquia', 'Eslovenia', 'España', 'Estados Unidos', 'Estonia',
+    'Etiopía', 'Filipinas', 'Finlandia', 'Fiyi', 'Francia',
+    'Gabón', 'Gambia', 'Georgia', 'Ghana', 'Granada',
+    'Grecia', 'Guatemala', 'Guinea', 'Guinea-Bisáu', 'Guinea Ecuatorial',
+    'Guyana', 'Haití', 'Honduras', 'Hungría', 'India',
+    'Indonesia', 'Irak', 'Irán', 'Irlanda', 'Islandia',
+    'Islas Marshall', 'Islas Salomón', 'Israel', 'Italia', 'Jamaica',
+    'Japón', 'Jordania', 'Kazajistán', 'Kenia', 'Kirguistán',
+    'Kiribati', 'Kuwait', 'Laos', 'Lesoto', 'Letonia',
+    'Líbano', 'Liberia', 'Libia', 'Liechtenstein', 'Lituania',
+    'Luxemburgo', 'Macedonia del Norte', 'Madagascar', 'Malasia', 'Malaui',
+    'Maldivas', 'Malí', 'Malta', 'Marruecos', 'Mauricio',
+    'Mauritania', 'México', 'Micronesia', 'Moldavia', 'Mónaco',
+    'Mongolia', 'Montenegro', 'Mozambique', 'Namibia', 'Nauru',
+    'Nepal', 'Nicaragua', 'Níger', 'Nigeria', 'Noruega',
+    'Nueva Zelanda', 'Omán', 'Países Bajos', 'Pakistán', 'Palaos',
+    'Palestina', 'Panamá', 'Papúa Nueva Guinea', 'Paraguay', 'Perú',
+    'Polonia', 'Portugal', 'Reino Unido', 'República Centroafricana', 'República del Congo',
+    'República Democrática del Congo', 'República Dominicana', 'Ruanda', 'Rumanía', 'Rusia',
+    'Samoa', 'San Cristóbal y Nieves', 'San Marino', 'San Vicente y las Granadinas', 'Santa Lucía',
+    'Santo Tomé y Príncipe', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leona',
+    'Singapur', 'Siria', 'Somalia', 'Sri Lanka', 'Suazilandia',
+    'Sudáfrica', 'Sudán', 'Sudán del Sur', 'Suecia', 'Suiza',
+    'Surinam', 'Tailandia', 'Tanzania', 'Tayikistán', 'Timor Oriental',
+    'Togo', 'Tonga', 'Trinidad y Tobago', 'Túnez', 'Turkmenistán',
+    'Turquía', 'Tuvalu', 'Ucrania', 'Uganda', 'Uruguay',
+    'Uzbekistán', 'Vanuatu', 'Vaticano', 'Venezuela', 'Vietnam',
+    'Yemen', 'Yibuti', 'Zambia', 'Zimbabue',
+    // Territorios y países históricos comunes en numismática
+    'Antillas Neerlandesas', 'Hong Kong', 'Macao', 'Puerto Rico',
+    'Islas Caimán', 'Islas Feroe', 'Groenlandia', 'Gibraltar',
+    'Islas Malvinas', 'Nueva Caledonia', 'Polinesia Francesa', 'Reunión',
+    'Guadalupe', 'Martinica', 'Guayana Francesa', 'Isla de Man',
+    'Jersey', 'Guernsey', 'Islas Vírgenes Británicas', 'Islas Vírgenes de los EE.UU.',
+    'Samoa Americana', 'Guam', 'Islas Marianas del Norte', 'Tokelau',
+    'Niue', 'Islas Cook', 'Wallis y Futuna', 'San Pedro y Miquelón',
+    'Santa Elena', 'Islas Pitcairn', 'Islas Turcas y Caicos', 'Bermudas',
+    'Anguila', 'Montserrat', 'Islas Cocos', 'Isla de Navidad',
+    'Islas Heard y McDonald', 'Islas Georgias del Sur', 'Somalilandia',
+    'Kosovo', 'Taiwán', 'Unión Soviética', 'Yugoslavia', 'Checoslovaquia',
+    'Alemania Oriental', 'Alemania Occidental', 'Imperio Austrohúngaro',
+    'Imperio Otomano', 'Imperio Romano', 'Imperio Español', 'República de Cuba (1902-1959)',
+  ];
 
   final List<TextInputFormatter> _numFormatters = [
     FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
+  ];
+
+  final List<TextInputFormatter> _intFormatters = [
+    FilteringTextInputFormatter.digitsOnly,
   ];
 
   @override
@@ -78,18 +193,18 @@ class _FormScreenState extends State<FormScreen> {
     super.initState();
     final m = widget.moneda;
 
-    _paisCtrl          = TextEditingController(text: m?.pais ?? '');
-    _periodoCtrl       = TextEditingController();
+    _paisCtrl          = TextEditingController();
+    _periodoCtrl       = TextEditingController(text: m?.periodoAcunacion ?? '');
     _denominacionCtrl  = TextEditingController(text: m?.denominacion ?? '');
     _anioCtrl          = TextEditingController(text: m?.anio ?? '');
     _cecaCtrl          = TextEditingController(text: m?.ceca ?? '');
     _kmCtrl            = TextEditingController(text: m?.kmCatalogo ?? '');
-    _metalCtrl         = TextEditingController(text: m?.metal ?? '');
+    _metalCtrl         = TextEditingController();
+    _acunadasCtrl      = TextEditingController(text: m?.acunadas?.toString() ?? '');
     _pesoCtrl          = TextEditingController(text: _numATexto(m?.pesoG));
     _diametroCtrl      = TextEditingController(text: _numATexto(m?.diametroMm));
     _grosorCtrl        = TextEditingController(text: _numATexto(m?.grosorMm));
-    _formaCtrl         = TextEditingController(text: m?.forma ?? '');
-    _cantoCtrl         = TextEditingController(text: m?.canto ?? '');
+    _leyCtrl           = TextEditingController(text: m?.ley ?? '');
     _detallesCtrl      = TextEditingController(text: m?.detallesVisibles ?? '');
     _precioCompraCtrl  = TextEditingController(text: _numATexto(m?.precioCompra));
     _lugarCompraCtrl   = TextEditingController(text: m?.lugarCompra ?? '');
@@ -98,32 +213,57 @@ class _FormScreenState extends State<FormScreen> {
     _ubicacionCtrl     = TextEditingController(text: m?.ubicacion ?? '');
     _notasCtrl         = TextEditingController(text: m?.notas ?? '');
 
-    _perteneceOnu = m?.perteneceOnu ?? false;
-    _autenticidad = (m != null && m.autenticidad.isNotEmpty) ? m.autenticidad : 'Original';
-    _monedaPrecio = (m != null && m.monedaPrecio.isNotEmpty) ? m.monedaPrecio : 'EUR';
-    _fechaCompra  = m?.fechaCompra;
-    _fechaVenta   = m?.fechaVenta;
-    _fotoAnverso  = m?.fotoAnverso;
-    _fotoReverso  = m?.fotoReverso;
-    _fotoCanto    = m?.fotoCanto;
-    _fotoKm       = m?.fotoKm;
-    _gradoSheldon = (m != null && m.gradoSheldon.isNotEmpty) ? m.gradoSheldon : null;
+    _perteneceOnu  = m?.perteneceOnu ?? false;
+    _conmemorativa = m?.conmemorativa ?? false;
+    _fao           = m?.fao ?? false;
+    _autenticidad  = (m != null && m.autenticidad.isNotEmpty) ? m.autenticidad : 'Original';
+    _monedaPrecio  = (m != null && m.monedaPrecio.isNotEmpty) ? m.monedaPrecio : 'CUP';
+    _valorEstimadoMoneda = (m != null && m.valorEstimadoMoneda.isNotEmpty) ? m.valorEstimadoMoneda : 'CUP';
+    _fechaCompra   = m?.fechaCompra;
+    _fechaVenta    = m?.fechaVenta;
+    _fotoAnverso   = m?.fotoAnverso;
+    _fotoReverso   = m?.fotoReverso;
+    _fotoCanto     = m?.fotoCanto;
+    _fotoKm        = m?.fotoKm;
+    _gradoSheldon  = (m != null && m.gradoSheldon.isNotEmpty) ? m.gradoSheldon : null;
 
-    final periodoGuardado = m?.periodoAcunacion ?? '';
-    if (_periodos.contains(periodoGuardado)) {
-      _periodoAcunacion = periodoGuardado;
-    } else if (periodoGuardado.isNotEmpty) {
-      _periodoAcunacion = 'Otro';
-      _periodoCtrl.text = periodoGuardado;
+    // Selecciones desde el modelo
+    if (m != null) {
+      if (_paisesBase.contains(m.pais)) {
+        _paisSeleccionado = m.pais;
+      } else if (m.pais.isNotEmpty) {
+        // País guardado previamente: lo tratamos como personalizado.
+        _paisSeleccionado = m.pais;
+      }
+      if (_formas.contains(m.forma)) _formaSeleccionada = m.forma;
+      if (_metalesBase.contains(m.metal)) {
+        _metalSeleccionado = m.metal;
+      } else if (m.metal.isNotEmpty) {
+        _metalSeleccionado = m.metal;
+      }
+      if (_cantos.contains(m.canto)) _cantoSeleccionado = m.canto;
+      if (_alineaciones.contains(m.alineacion)) _alineacionSeleccionada = m.alineacion;
     }
+
+    _cargarListasPersonalizadas();
+  }
+
+  Future<void> _cargarListasPersonalizadas() async {
+    final paises = await _db.obtenerPaisesPersonalizados();
+    final metales = await _db.obtenerMetalesPersonalizados();
+    if (!mounted) return;
+    setState(() {
+      _paisesPersonalizados = paises;
+      _metalesPersonalizados = metales;
+    });
   }
 
   @override
   void dispose() {
     for (final c in [
       _paisCtrl, _periodoCtrl, _denominacionCtrl, _anioCtrl, _cecaCtrl,
-      _kmCtrl, _metalCtrl, _pesoCtrl, _diametroCtrl, _grosorCtrl,
-      _formaCtrl, _cantoCtrl, _detallesCtrl, _precioCompraCtrl,
+      _kmCtrl, _metalCtrl, _acunadasCtrl, _pesoCtrl, _diametroCtrl, _grosorCtrl,
+      _leyCtrl, _detallesCtrl, _precioCompraCtrl,
       _lugarCompraCtrl, _valorEstimadoCtrl,
       _precioVentaCtrl, _ubicacionCtrl, _notasCtrl,
     ]) {
@@ -132,6 +272,7 @@ class _FormScreenState extends State<FormScreen> {
     super.dispose();
   }
 
+  // ---- Utilidades ----
   static String _numATexto(double? v) {
     if (v == null) return '';
     if (v == v.roundToDouble()) return v.toStringAsFixed(0);
@@ -142,6 +283,12 @@ class _FormScreenState extends State<FormScreen> {
     final t = texto.trim().replaceAll(',', '.');
     if (t.isEmpty) return null;
     return double.tryParse(t);
+  }
+
+  static int? _parseInt(String texto) {
+    final t = texto.trim();
+    if (t.isEmpty) return null;
+    return int.tryParse(t);
   }
 
   Future<DateTime?> _elegirFecha(DateTime? inicial) async {
@@ -159,9 +306,68 @@ class _FormScreenState extends State<FormScreen> {
     return f;
   }
 
-  Future<String?> _elegirYcopiarImagen() async {
+  // ---- Diálogo genérico para "OTRO" ----
+  Future<String?> _pedirTextoNuevo({
+    required String titulo,
+    required String hint,
+  }) async {
+    final ctrl = TextEditingController();
+    final resultado = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(titulo),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(hintText: hint),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              final v = ctrl.text.trim();
+              Navigator.pop(ctx, v.isEmpty ? null : v);
+            },
+            child: const Text('Añadir'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    return resultado;
+  }
+
+  Future<void> _agregarPaisPersonalizado() async {
+    final nombre = await _pedirTextoNuevo(
+      titulo: 'Añadir país o territorio',
+      hint: 'Ej: Cuba colonial',
+    );
+    if (nombre == null || !mounted) return;
+    await _db.insertarPaisPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+    if (!mounted) return;
+    setState(() => _paisSeleccionado = nombre);
+  }
+
+  Future<void> _agregarMetalPersonalizado() async {
+    final nombre = await _pedirTextoNuevo(
+      titulo: 'Añadir metal o aleación',
+      hint: 'Ej: Cuproníquel dorado',
+    );
+    if (nombre == null || !mounted) return;
+    await _db.insertarMetalPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+    if (!mounted) return;
+    setState(() => _metalSeleccionado = nombre);
+  }
+
+  // ---- Imágenes ----
+  Future<String?> _elegirYcopiarImagen(ImageSource source) async {
     try {
-      final pick = await _picker.pickImage(source: ImageSource.gallery);
+      final pick = await _picker.pickImage(source: source);
       if (pick == null) return null;
       final dirDocs = await getApplicationDocumentsDirectory();
       final dirFotos = Directory(p.join(dirDocs.path, 'fotos'));
@@ -182,8 +388,8 @@ class _FormScreenState extends State<FormScreen> {
     }
   }
 
-  Future<void> _seleccionarFoto(String cual) async {
-    final nueva = await _elegirYcopiarImagen();
+  Future<void> _seleccionarFoto(String cual, ImageSource source) async {
+    final nueva = await _elegirYcopiarImagen(source);
     if (nueva == null || !mounted) return;
     setState(() {
       switch (cual) {
@@ -206,6 +412,7 @@ class _FormScreenState extends State<FormScreen> {
     });
   }
 
+  // ---- Guardar ----
   Future<void> _guardar() async {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) {
@@ -220,32 +427,32 @@ class _FormScreenState extends State<FormScreen> {
     final pesoVal      = _parseNum(_pesoCtrl.text);
     final diametroVal  = _parseNum(_diametroCtrl.text);
     final grosorVal    = _parseNum(_grosorCtrl.text);
+    final acunadasVal  = _parseInt(_acunadasCtrl.text);
     final pCompraVal   = _parseNum(_precioCompraCtrl.text);
     final vEstimadoVal = _parseNum(_valorEstimadoCtrl.text);
     final pVentaVal    = _parseNum(_precioVentaCtrl.text);
 
-    final periodoFinal = _periodoAcunacion == 'Otro'
-        ? _periodoCtrl.text.trim()
-        : (_periodoAcunacion ?? '');
-
     final base = widget.moneda ?? Moneda.empty();
 
     final moneda = base.copyWith(
-      pais: _paisCtrl.text.trim(),
+      pais: (_paisSeleccionado ?? '').trim(),
       perteneceOnu: _perteneceOnu,
-      conmemorativa: false,
-      fao: false,
-      periodoAcunacion: periodoFinal,
+      conmemorativa: _conmemorativa,
+      fao: _fao,
+      periodoAcunacion: _periodoCtrl.text.trim(),
       denominacion: _denominacionCtrl.text.trim(),
       anio: _anioCtrl.text.trim(),
       ceca: _cecaCtrl.text.trim(),
       kmCatalogo: _kmCtrl.text.trim(),
-      metal: _metalCtrl.text.trim(),
+      acunadas: acunadasVal,
       pesoG: pesoVal,
       diametroMm: diametroVal,
       grosorMm: grosorVal,
-      forma: _formaCtrl.text.trim(),
-      canto: _cantoCtrl.text.trim(),
+      forma: _formaSeleccionada ?? '',
+      metal: _metalSeleccionado ?? '',
+      ley: _leyCtrl.text.trim(),
+      canto: _cantoSeleccionado ?? '',
+      alineacion: _alineacionSeleccionada ?? '',
       gradoSheldon: _gradoSheldon ?? '',
       detallesVisibles: _detallesCtrl.text.trim(),
       autenticidad: _autenticidad,
@@ -254,6 +461,7 @@ class _FormScreenState extends State<FormScreen> {
       lugarCompra: _lugarCompraCtrl.text.trim(),
       fechaCompra: _fechaCompra,
       valorEstimado: vEstimadoVal,
+      valorEstimadoMoneda: _valorEstimadoMoneda,
       precioVenta: pVentaVal,
       fechaVenta: _fechaVenta,
       fotoAnverso: _fotoAnverso,
@@ -262,6 +470,7 @@ class _FormScreenState extends State<FormScreen> {
       fotoKm: _fotoKm,
       notas: _notasCtrl.text.trim(),
       ubicacion: _ubicacionCtrl.text.trim(),
+      limpiarAcunadas: acunadasVal == null,
       limpiarPesoG: pesoVal == null,
       limpiarDiametroMm: diametroVal == null,
       limpiarGrosorMm: grosorVal == null,
@@ -303,10 +512,28 @@ class _FormScreenState extends State<FormScreen> {
     Navigator.pop(context, true);
   }
 
+  // ---- Build ----
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final titulo = widget.esEdicion ? 'Editar moneda' : 'Nueva moneda';
+
+    // Lista completa de países: base + personalizados (sin duplicar)
+    final paisesCompletos = <String>{
+      ..._paisesBase,
+      ..._paisesPersonalizados,
+      if (_paisSeleccionado != null && _paisSeleccionado!.isNotEmpty)
+        _paisSeleccionado!,
+    }.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    final metalesCompletos = <String>{
+      ..._metalesBase,
+      ..._metalesPersonalizados,
+      if (_metalSeleccionado != null && _metalSeleccionado!.isNotEmpty)
+        _metalSeleccionado!,
+    }.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     return Scaffold(
       appBar: AppBar(title: Text(titulo)),
@@ -327,14 +554,19 @@ class _FormScreenState extends State<FormScreen> {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
           child: Column(
             children: [
+              // ---------------- Identificación ----------------
               _BloqueFormulario(
                 titulo: 'Identificación',
                 icono: Icons.badge_outlined,
                 hijos: [
-                  _TextoForm(
-                    controller: _paisCtrl,
+                  // País con dropdown + OTRO
+                  _DropdownConOtro(
                     etiqueta: 'País *',
                     icono: Icons.public,
+                    valor: _paisSeleccionado,
+                    items: paisesCompletos,
+                    onChanged: (v) => setState(() => _paisSeleccionado = v),
+                    onAgregarOtro: _agregarPaisPersonalizado,
                     validadorObligatorio: true,
                   ),
                   _TextoForm(
@@ -343,19 +575,11 @@ class _FormScreenState extends State<FormScreen> {
                     icono: Icons.circle_outlined,
                     validadorObligatorio: true,
                   ),
-                  _Dropdown<String>(
+                  _TextoForm(
+                    controller: _periodoCtrl,
                     etiqueta: 'Período de acuñación',
                     icono: Icons.history_edu_outlined,
-                    valor: _periodoAcunacion,
-                    items: _periodos,
-                    onChanged: (v) => setState(() => _periodoAcunacion = v),
                   ),
-                  if (_periodoAcunacion == 'Otro')
-                    _TextoForm(
-                      controller: _periodoCtrl,
-                      etiqueta: 'Especifica el período',
-                      icono: Icons.edit_outlined,
-                    ),
                   _TextoForm(
                     controller: _anioCtrl,
                     etiqueta: 'Año (admite rangos: 1902-1915, c. 1890)',
@@ -372,22 +596,37 @@ class _FormScreenState extends State<FormScreen> {
                     icono: Icons.menu_book_outlined,
                   ),
                   _TextoForm(
-                    controller: _metalCtrl,
-                    etiqueta: 'Metal',
-                    icono: Icons.bolt_outlined,
+                    controller: _acunadasCtrl,
+                    etiqueta: 'Acuñadas (unidades)',
+                    icono: Icons.numbers,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: false),
+                    formatters: _intFormatters,
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     dense: true,
-                    title: Text(
-                      'Pertenece a la ONU',
-                      style: theme.textTheme.bodyLarge,
-                    ),
+                    title: Text('Pertenece a la ONU', style: theme.textTheme.bodyLarge),
                     value: _perteneceOnu,
                     onChanged: (v) => setState(() => _perteneceOnu = v),
                   ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text('Conmemorativa', style: theme.textTheme.bodyLarge),
+                    value: _conmemorativa,
+                    onChanged: (v) => setState(() => _conmemorativa = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text('FAO', style: theme.textTheme.bodyLarge),
+                    value: _fao,
+                    onChanged: (v) => setState(() => _fao = v),
+                  ),
                 ],
               ),
+
+              // ---------------- Características físicas ----------------
               _BloqueFormulario(
                 titulo: 'Características físicas',
                 icono: Icons.straighten,
@@ -425,20 +664,50 @@ class _FormScreenState extends State<FormScreen> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _TextoForm(
-                        controller: _formaCtrl,
+                      child: _Dropdown<String>(
                         etiqueta: 'Forma',
                         icono: Icons.crop_free,
+                        valor: _formaSeleccionada,
+                        items: _formas,
+                        onChanged: (v) => setState(() => _formaSeleccionada = v),
                       ),
                     ),
                   ]),
+                  // Metal (movido a características) con dropdown + OTRO
+                  _DropdownConOtro(
+                    etiqueta: 'Metal',
+                    icono: Icons.bolt_outlined,
+                    valor: _metalSeleccionado,
+                    items: metalesCompletos,
+                    onChanged: (v) => setState(() => _metalSeleccionado = v),
+                    onAgregarOtro: _agregarMetalPersonalizado,
+                    validadorObligatorio: false,
+                  ),
                   _TextoForm(
-                    controller: _cantoCtrl,
+                    controller: _leyCtrl,
+                    etiqueta: 'Ley (pureza, ej. 0.900)',
+                    icono: Icons.science_outlined,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                    formatters: _numFormatters,
+                  ),
+                  _Dropdown<String>(
                     etiqueta: 'Canto',
                     icono: Icons.line_weight,
+                    valor: _cantoSeleccionado,
+                    items: _cantos,
+                    onChanged: (v) => setState(() => _cantoSeleccionado = v),
+                  ),
+                  _Dropdown<String>(
+                    etiqueta: 'Alineación',
+                    icono: Icons.swap_horiz,
+                    valor: _alineacionSeleccionada,
+                    items: _alineaciones,
+                    onChanged: (v) => setState(() => _alineacionSeleccionada = v),
                   ),
                 ],
               ),
+
+              // ---------------- Estado y autenticidad (sin cambios) ----------------
               _BloqueFormulario(
                 titulo: 'Estado y autenticidad',
                 icono: Icons.verified_outlined,
@@ -494,6 +763,8 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
+
+              // ---------------- Adquisición (parcial, se rediseña en Lote 3) ----------------
               _BloqueFormulario(
                 titulo: 'Adquisición y valoración',
                 icono: Icons.shopping_bag_outlined,
@@ -504,7 +775,7 @@ class _FormScreenState extends State<FormScreen> {
                       child: _TextoForm(
                         controller: _precioCompraCtrl,
                         etiqueta: 'Precio de compra',
-                        icono: Icons.euro_outlined,
+                        icono: Icons.attach_money,
                         tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
                         formatters: _numFormatters,
                       ),
@@ -516,7 +787,7 @@ class _FormScreenState extends State<FormScreen> {
                         icono: Icons.currency_exchange,
                         valor: _monedaPrecio,
                         items: _monedasPrecio,
-                        onChanged: (v) => setState(() => _monedaPrecio = v ?? 'EUR'),
+                        onChanged: (v) => setState(() => _monedaPrecio = v ?? 'CUP'),
                       ),
                     ),
                   ]),
@@ -538,13 +809,29 @@ class _FormScreenState extends State<FormScreen> {
                     etiqueta: 'Lugar de compra',
                     icono: Icons.place_outlined,
                   ),
-                  _TextoForm(
-                    controller: _valorEstimadoCtrl,
-                    etiqueta: 'Valor estimado actual',
-                    icono: Icons.trending_up,
-                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                    formatters: _numFormatters,
-                  ),
+                  // Valor estimado + moneda
+                  Row(children: [
+                    Expanded(
+                      flex: 2,
+                      child: _TextoForm(
+                        controller: _valorEstimadoCtrl,
+                        etiqueta: 'Valor estimado',
+                        icono: Icons.trending_up,
+                        tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                        formatters: _numFormatters,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _Dropdown<String>(
+                        etiqueta: 'Moneda',
+                        icono: Icons.currency_exchange,
+                        valor: _valorEstimadoMoneda,
+                        items: _monedasPrecio,
+                        onChanged: (v) => setState(() => _valorEstimadoMoneda = v ?? 'CUP'),
+                      ),
+                    ),
+                  ]),
                   const Divider(height: 28),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
@@ -572,6 +859,8 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
+
+              // ---------------- Multimedia (con cámara) ----------------
               _BloqueFormulario(
                 titulo: 'Multimedia',
                 icono: Icons.photo_camera_outlined,
@@ -579,29 +868,35 @@ class _FormScreenState extends State<FormScreen> {
                   _SelectorImagen(
                     etiqueta: 'Anverso',
                     ruta: _fotoAnverso,
-                    onElegir: () => _seleccionarFoto('anverso'),
+                    onGaleria: () => _seleccionarFoto('anverso', ImageSource.gallery),
+                    onCamara: () => _seleccionarFoto('anverso', ImageSource.camera),
                     onQuitar: _fotoAnverso == null ? null : () => _quitarFoto('anverso'),
                   ),
                   _SelectorImagen(
                     etiqueta: 'Reverso',
                     ruta: _fotoReverso,
-                    onElegir: () => _seleccionarFoto('reverso'),
+                    onGaleria: () => _seleccionarFoto('reverso', ImageSource.gallery),
+                    onCamara: () => _seleccionarFoto('reverso', ImageSource.camera),
                     onQuitar: _fotoReverso == null ? null : () => _quitarFoto('reverso'),
                   ),
                   _SelectorImagen(
                     etiqueta: 'Canto (opcional)',
                     ruta: _fotoCanto,
-                    onElegir: () => _seleccionarFoto('canto'),
+                    onGaleria: () => _seleccionarFoto('canto', ImageSource.gallery),
+                    onCamara: () => _seleccionarFoto('canto', ImageSource.camera),
                     onQuitar: _fotoCanto == null ? null : () => _quitarFoto('canto'),
                   ),
                   _SelectorImagen(
                     etiqueta: 'KM# (opcional)',
                     ruta: _fotoKm,
-                    onElegir: () => _seleccionarFoto('km'),
+                    onGaleria: () => _seleccionarFoto('km', ImageSource.gallery),
+                    onCamara: () => _seleccionarFoto('km', ImageSource.camera),
                     onQuitar: _fotoKm == null ? null : () => _quitarFoto('km'),
                   ),
                 ],
               ),
+
+              // ---------------- Ubicación y notas (sin etiquetas) ----------------
               _BloqueFormulario(
                 titulo: 'Ubicación y notas',
                 icono: Icons.inventory_2_outlined,
@@ -744,6 +1039,69 @@ class _Dropdown<T> extends StatelessWidget {
   }
 }
 
+/// Dropdown que incluye la opción "OTRO…" al final, que dispara un callback
+/// para pedir un nuevo valor (país/metal personalizado).
+class _DropdownConOtro extends StatelessWidget {
+  final String etiqueta;
+  final IconData icono;
+  final String? valor;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+  final VoidCallback onAgregarOtro;
+  final bool validadorObligatorio;
+
+  const _DropdownConOtro({
+    required this.etiqueta,
+    required this.icono,
+    required this.valor,
+    required this.items,
+    required this.onChanged,
+    required this.onAgregarOtro,
+    this.validadorObligatorio = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Copiamos la lista y añadimos "OTRO" al final (solo visualmente).
+    final itemsVisibles = <String>[...items, 'OTRO…'];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String>(
+        value: (valor == null || valor!.isEmpty) ? null : valor,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: etiqueta,
+          prefixIcon: Icon(icono),
+        ),
+        items: itemsVisibles
+            .map((e) => DropdownMenuItem<String>(
+                  value: e,
+                  child: Text(
+                    e,
+                    style: e == 'OTRO…'
+                        ? const TextStyle(fontStyle: FontStyle.italic)
+                        : null,
+                  ),
+                ))
+            .toList(),
+        onChanged: (v) {
+          if (v == 'OTRO…') {
+            onAgregarOtro();
+          } else {
+            onChanged(v);
+          }
+        },
+        validator: (v) {
+          if (!validadorObligatorio) return null;
+          if (v == null || v.isEmpty || v == 'OTRO…') return 'Campo obligatorio';
+          return null;
+        },
+      ),
+    );
+  }
+}
+
 class _SelectorFecha extends StatelessWidget {
   final String etiqueta;
   final DateTime? valor;
@@ -794,16 +1152,19 @@ class _SelectorFecha extends StatelessWidget {
   }
 }
 
+/// Selector de imagen con miniatura + botón galería + botón cámara + quitar.
 class _SelectorImagen extends StatelessWidget {
   final String etiqueta;
   final String? ruta;
-  final VoidCallback onElegir;
+  final VoidCallback onGaleria;
+  final VoidCallback onCamara;
   final VoidCallback? onQuitar;
 
   const _SelectorImagen({
     required this.etiqueta,
     required this.ruta,
-    required this.onElegir,
+    required this.onGaleria,
+    required this.onCamara,
     this.onQuitar,
   });
 
@@ -845,11 +1206,17 @@ class _SelectorImagen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 4,
                   children: [
                     OutlinedButton.icon(
-                      onPressed: onElegir,
+                      onPressed: onGaleria,
                       icon: const Icon(Icons.photo_library_outlined, size: 18),
-                      label: Text(ruta == null ? 'Elegir' : 'Cambiar'),
+                      label: Text(ruta == null ? 'Galería' : 'Cambiar'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: onCamara,
+                      icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                      label: const Text('Cámara'),
                     ),
                     if (onQuitar != null)
                       TextButton.icon(
