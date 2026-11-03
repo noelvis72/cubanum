@@ -365,29 +365,49 @@ class _FormScreenState extends State<FormScreen> {
   }
 
   // ---- Imágenes ----
-  Future<String?> _elegirYcopiarImagen(ImageSource source) async {
-    try {
-      final pick = await _picker.pickImage(source: source);
-      if (pick == null) return null;
-      final dirDocs = await getApplicationDocumentsDirectory();
-      final dirFotos = Directory(p.join(dirDocs.path, 'fotos'));
-      if (!await dirFotos.exists()) {
-        await dirFotos.create(recursive: true);
-      }
-      final ext = p.extension(pick.path);
-      final nombre = '${DateTime.now().microsecondsSinceEpoch}$ext';
-      final destino = p.join(dirFotos.path, nombre);
-      await File(pick.path).copy(destino);
-      return destino;
-    } catch (e) {
-      if (!mounted) return null;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo cargar la imagen: $e')),
-      );
-      return null;
-    }
-  }
+  import 'package:permission_handler/permission_handler.dart';
 
+// ... dentro del State ...
+
+Future<String?> _elegirYcopiarImagen(ImageSource source) async {
+  try {
+    // Pedir permiso de cámara si es necesario
+    if (source == ImageSource.camera) {
+      final status = await Permission.camera.request();
+      if (!status.isGranted) {
+        if (!mounted) return null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Permiso de cámara denegado')),
+        );
+        return null;
+      }
+    }
+
+    final pick = await _picker.pickImage(
+      source: source,
+      imageQuality: 85, // Reduce el tamaño para evitar OOM
+      maxWidth: 2000,
+      maxHeight: 2000,
+    );
+    if (pick == null) return null;
+    final dirDocs = await getApplicationDocumentsDirectory();
+    final dirFotos = Directory(p.join(dirDocs.path, 'fotos'));
+    if (!await dirFotos.exists()) {
+      await dirFotos.create(recursive: true);
+    }
+    final ext = p.extension(pick.path);
+    final nombre = '${DateTime.now().microsecondsSinceEpoch}$ext';
+    final destino = p.join(dirFotos.path, nombre);
+    await File(pick.path).copy(destino);
+    return destino;
+  } catch (e) {
+    if (!mounted) return null;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('No se pudo cargar la imagen: $e')),
+    );
+    return null;
+  }
+}
   Future<void> _seleccionarFoto(String cual, ImageSource source) async {
     final nueva = await _elegirYcopiarImagen(source);
     if (nueva == null || !mounted) return;
