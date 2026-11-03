@@ -203,8 +203,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
                   _FilaDato('Precio de compra', _precio(m.precioCompra!, m.monedaPrecio)),
                 if (m.fechaCompra != null)
                   _FilaDato('Fecha de compra', _fecha(m.fechaCompra!)),
-                _FilaDato('Proveedor', m.proveedor),
-                _FilaDato('Lugar de compra', m.lugarCompra),
+                  _FilaDato('Lugar de compra', m.lugarCompra),
                 if (m.valorEstimado != null)
                   _FilaDato('Valor estimado', _precio(m.valorEstimado!, m.monedaPrecio)),
                 if (m.precioVenta != null)
@@ -218,7 +217,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
               icono: Icons.inventory_2_outlined,
               filas: [
                 _FilaDato('Ubicación', m.ubicacion),
-                _FilaDato('Etiquetas', m.etiquetas),
                 _FilaDato('Notas', m.notas),
               ],
             ),
