@@ -2,65 +2,79 @@ class Moneda {
   final int? id;
   final String pais;
   final bool perteneceOnu;
+  final bool conmemorativa;
+  final bool fao;
   final String periodoAcunacion;
   final String denominacion;
   final String anio;
   final String ceca;
   final String kmCatalogo;
-  final String metal;
+  final int? acunadas;
 
+  // Características físicas
   final double? pesoG;
   final double? diametroMm;
   final double? grosorMm;
   final String forma;
+  final String metal;
+  final String ley;
   final String canto;
+  final String alineacion;
 
+  // Estado y autenticidad
   final String gradoSheldon;
   final String detallesVisibles;
   final String autenticidad;
 
+  // Adquisición y valoración
   final double? precioCompra;
   final String monedaPrecio;
-  final String proveedor;
   final String lugarCompra;
   final DateTime? fechaCompra;
   final double? valorEstimado;
+  final String valorEstimadoMoneda;
   final double? precioVenta;
   final DateTime? fechaVenta;
 
+  // Multimedia
   final String? fotoAnverso;
   final String? fotoReverso;
   final String? fotoCanto;
   final String? fotoKm;
 
+  // Notas y organización
   final String notas;
-  final String etiquetas;
   final String ubicacion;
 
   Moneda({
     this.id,
     required this.pais,
     required this.perteneceOnu,
+    required this.conmemorativa,
+    required this.fao,
     required this.periodoAcunacion,
     required this.denominacion,
     required this.anio,
     required this.ceca,
     required this.kmCatalogo,
-    required this.metal,
+    this.acunadas,
     this.pesoG,
     this.diametroMm,
     this.grosorMm,
     required this.forma,
+    required this.metal,
+    required this.ley,
     required this.canto,
+    required this.alineacion,
     required this.gradoSheldon,
     required this.detallesVisibles,
     required this.autenticidad,
     this.precioCompra,
     required this.monedaPrecio,
-    required this.proveedor,
     required this.lugarCompra,
     this.fechaCompra,
     this.valorEstimado,
+    required this.valorEstimadoMoneda,
     this.precioVenta,
     this.fechaVenta,
     this.fotoAnverso,
@@ -68,7 +82,6 @@ class Moneda {
     this.fotoCanto,
     this.fotoKm,
     required this.notas,
-    required this.etiquetas,
     required this.ubicacion,
   });
 
@@ -76,26 +89,31 @@ class Moneda {
         id: null,
         pais: '',
         perteneceOnu: false,
+        conmemorativa: false,
+        fao: false,
         periodoAcunacion: '',
         denominacion: '',
         anio: '',
         ceca: '',
         kmCatalogo: '',
-        metal: '',
+        acunadas: null,
         pesoG: null,
         diametroMm: null,
         grosorMm: null,
         forma: '',
+        metal: '',
+        ley: '',
         canto: '',
+        alineacion: '',
         gradoSheldon: '',
         detallesVisibles: '',
         autenticidad: 'Original',
         precioCompra: null,
-        monedaPrecio: 'EUR',
-        proveedor: '',
+        monedaPrecio: 'CUP',
         lugarCompra: '',
         fechaCompra: null,
         valorEstimado: null,
+        valorEstimadoMoneda: 'CUP',
         precioVenta: null,
         fechaVenta: null,
         fotoAnverso: null,
@@ -103,7 +121,6 @@ class Moneda {
         fotoCanto: null,
         fotoKm: null,
         notas: '',
-        etiquetas: '',
         ubicacion: '',
       );
 
@@ -113,26 +130,31 @@ class Moneda {
         if (id != null) 'id': id,
         'pais': pais,
         'pertenece_onu': perteneceOnu ? 1 : 0,
+        'conmemorativa': conmemorativa ? 1 : 0,
+        'fao': fao ? 1 : 0,
         'periodo_acunacion': periodoAcunacion,
         'denominacion': denominacion,
         'anio': anio,
         'ceca': ceca,
         'km_catalogo': kmCatalogo,
-        'metal': metal,
+        'acunadas': acunadas,
         'peso_g': pesoG,
         'diametro_mm': diametroMm,
         'grosor_mm': grosorMm,
         'forma': forma,
+        'metal': metal,
+        'ley': ley,
         'canto': canto,
+        'alineacion': alineacion,
         'grado_sheldon': gradoSheldon,
         'detalles_visibles': detallesVisibles,
         'autenticidad': autenticidad,
         'precio_compra': precioCompra,
         'moneda_precio': monedaPrecio,
-        'proveedor': proveedor,
         'lugar_compra': lugarCompra,
         'fecha_compra': _fechaATexto(fechaCompra),
         'valor_estimado': valorEstimado,
+        'valor_estimado_moneda': valorEstimadoMoneda,
         'precio_venta': precioVenta,
         'fecha_venta': _fechaATexto(fechaVenta),
         'foto_anverso': fotoAnverso,
@@ -140,7 +162,6 @@ class Moneda {
         'foto_canto': fotoCanto,
         'foto_km': fotoKm,
         'notas': notas,
-        'etiquetas': etiquetas,
         'ubicacion': ubicacion,
       };
 
@@ -148,26 +169,31 @@ class Moneda {
         id: map['id'] as int?,
         pais: (map['pais'] as String?) ?? '',
         perteneceOnu: (map['pertenece_onu'] as int? ?? 0) == 1,
+        conmemorativa: (map['conmemorativa'] as int? ?? 0) == 1,
+        fao: (map['fao'] as int? ?? 0) == 1,
         periodoAcunacion: (map['periodo_acunacion'] as String?) ?? '',
         denominacion: (map['denominacion'] as String?) ?? '',
         anio: (map['anio'] as String?) ?? '',
         ceca: (map['ceca'] as String?) ?? '',
         kmCatalogo: (map['km_catalogo'] as String?) ?? '',
-        metal: (map['metal'] as String?) ?? '',
+        acunadas: _aInt(map['acunadas']),
         pesoG: _aDouble(map['peso_g']),
         diametroMm: _aDouble(map['diametro_mm']),
         grosorMm: _aDouble(map['grosor_mm']),
         forma: (map['forma'] as String?) ?? '',
+        metal: (map['metal'] as String?) ?? '',
+        ley: (map['ley'] as String?) ?? '',
         canto: (map['canto'] as String?) ?? '',
+        alineacion: (map['alineacion'] as String?) ?? '',
         gradoSheldon: (map['grado_sheldon'] as String?) ?? '',
         detallesVisibles: (map['detalles_visibles'] as String?) ?? '',
         autenticidad: (map['autenticidad'] as String?) ?? 'Original',
         precioCompra: _aDouble(map['precio_compra']),
-        monedaPrecio: (map['moneda_precio'] as String?) ?? 'EUR',
-        proveedor: (map['proveedor'] as String?) ?? '',
+        monedaPrecio: (map['moneda_precio'] as String?) ?? 'CUP',
         lugarCompra: (map['lugar_compra'] as String?) ?? '',
         fechaCompra: _aFecha(map['fecha_compra']),
         valorEstimado: _aDouble(map['valor_estimado']),
+        valorEstimadoMoneda: (map['valor_estimado_moneda'] as String?) ?? 'CUP',
         precioVenta: _aDouble(map['precio_venta']),
         fechaVenta: _aFecha(map['fecha_venta']),
         fotoAnverso: map['foto_anverso'] as String?,
@@ -175,9 +201,16 @@ class Moneda {
         fotoCanto: map['foto_canto'] as String?,
         fotoKm: map['foto_km'] as String?,
         notas: (map['notas'] as String?) ?? '',
-        etiquetas: (map['etiquetas'] as String?) ?? '',
         ubicacion: (map['ubicacion'] as String?) ?? '',
       );
+
+  static int? _aInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    if (v is String) return int.tryParse(v);
+    return null;
+  }
 
   static double? _aDouble(dynamic v) {
     if (v == null) return null;
@@ -207,26 +240,31 @@ class Moneda {
     int? id,
     String? pais,
     bool? perteneceOnu,
+    bool? conmemorativa,
+    bool? fao,
     String? periodoAcunacion,
     String? denominacion,
     String? anio,
     String? ceca,
     String? kmCatalogo,
-    String? metal,
+    int? acunadas,
     double? pesoG,
     double? diametroMm,
     double? grosorMm,
     String? forma,
+    String? metal,
+    String? ley,
     String? canto,
+    String? alineacion,
     String? gradoSheldon,
     String? detallesVisibles,
     String? autenticidad,
     double? precioCompra,
     String? monedaPrecio,
-    String? proveedor,
     String? lugarCompra,
     DateTime? fechaCompra,
     double? valorEstimado,
+    String? valorEstimadoMoneda,
     double? precioVenta,
     DateTime? fechaVenta,
     String? fotoAnverso,
@@ -234,8 +272,8 @@ class Moneda {
     String? fotoCanto,
     String? fotoKm,
     String? notas,
-    String? etiquetas,
     String? ubicacion,
+    bool limpiarAcunadas = false,
     bool limpiarPesoG = false,
     bool limpiarDiametroMm = false,
     bool limpiarGrosorMm = false,
@@ -253,26 +291,31 @@ class Moneda {
       id: id ?? this.id,
       pais: pais ?? this.pais,
       perteneceOnu: perteneceOnu ?? this.perteneceOnu,
+      conmemorativa: conmemorativa ?? this.conmemorativa,
+      fao: fao ?? this.fao,
       periodoAcunacion: periodoAcunacion ?? this.periodoAcunacion,
       denominacion: denominacion ?? this.denominacion,
       anio: anio ?? this.anio,
       ceca: ceca ?? this.ceca,
       kmCatalogo: kmCatalogo ?? this.kmCatalogo,
-      metal: metal ?? this.metal,
+      acunadas: limpiarAcunadas ? null : (acunadas ?? this.acunadas),
       pesoG: limpiarPesoG ? null : (pesoG ?? this.pesoG),
       diametroMm: limpiarDiametroMm ? null : (diametroMm ?? this.diametroMm),
       grosorMm: limpiarGrosorMm ? null : (grosorMm ?? this.grosorMm),
       forma: forma ?? this.forma,
+      metal: metal ?? this.metal,
+      ley: ley ?? this.ley,
       canto: canto ?? this.canto,
+      alineacion: alineacion ?? this.alineacion,
       gradoSheldon: gradoSheldon ?? this.gradoSheldon,
       detallesVisibles: detallesVisibles ?? this.detallesVisibles,
       autenticidad: autenticidad ?? this.autenticidad,
       precioCompra: limpiarPrecioCompra ? null : (precioCompra ?? this.precioCompra),
       monedaPrecio: monedaPrecio ?? this.monedaPrecio,
-      proveedor: proveedor ?? this.proveedor,
       lugarCompra: lugarCompra ?? this.lugarCompra,
       fechaCompra: limpiarFechaCompra ? null : (fechaCompra ?? this.fechaCompra),
       valorEstimado: limpiarValorEstimado ? null : (valorEstimado ?? this.valorEstimado),
+      valorEstimadoMoneda: valorEstimadoMoneda ?? this.valorEstimadoMoneda,
       precioVenta: limpiarPrecioVenta ? null : (precioVenta ?? this.precioVenta),
       fechaVenta: limpiarFechaVenta ? null : (fechaVenta ?? this.fechaVenta),
       fotoAnverso: limpiarFotoAnverso ? null : (fotoAnverso ?? this.fotoAnverso),
@@ -280,7 +323,6 @@ class Moneda {
       fotoCanto: limpiarFotoCanto ? null : (fotoCanto ?? this.fotoCanto),
       fotoKm: limpiarFotoKm ? null : (fotoKm ?? this.fotoKm),
       notas: notas ?? this.notas,
-      etiquetas: etiquetas ?? this.etiquetas,
       ubicacion: ubicacion ?? this.ubicacion,
     );
   }
