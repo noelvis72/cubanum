@@ -233,6 +233,8 @@ class _FormScreenState extends State<FormScreen> {
     final moneda = base.copyWith(
       pais: _paisCtrl.text.trim(),
       perteneceOnu: _perteneceOnu,
+      conmemorativa: false,
+      fao: false,
       periodoAcunacion: periodoFinal,
       denominacion: _denominacionCtrl.text.trim(),
       anio: _anioCtrl.text.trim(),
