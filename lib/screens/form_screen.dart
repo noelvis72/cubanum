@@ -1160,6 +1160,8 @@ class _SelectorFecha extends StatelessWidget {
 }
 
 /// Selector de imagen con miniatura + botón galería + botón cámara + quitar.
+/// Selector de imagen con miniatura arriba y fila de botones debajo.
+/// Layout compacto que no se desborda ni se desalinea.
 class _SelectorImagen extends StatelessWidget {
   final String etiqueta;
   final String? ruta;
@@ -1181,62 +1183,112 @@ class _SelectorImagen extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: scheme.outline.withOpacity(0.6)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: ruta == null
-                ? Icon(Icons.image_outlined, color: scheme.primary.withOpacity(0.6))
-                : Image.file(
-                    File(ruta!),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(
-                      Icons.broken_image_outlined,
-                      color: scheme.primary.withOpacity(0.6),
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(etiqueta, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: onGaleria,
-                      icon: const Icon(Icons.photo_library_outlined, size: 18),
-                      label: Text(ruta == null ? 'Galería' : 'Cambiar'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onCamara,
-                      icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                      label: const Text('Cámara'),
-                    ),
-                    if (onQuitar != null)
-                      TextButton.icon(
-                        onPressed: onQuitar,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Quitar'),
+          // Etiqueta del campo
+          Text(etiqueta, style: theme.textTheme.bodyLarge),
+          const SizedBox(height: 6),
+          // Miniatura + botones en fila
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Miniatura
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: scheme.outline.withOpacity(0.6)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ruta == null
+                    ? Icon(
+                        Icons.image_outlined,
+                        color: scheme.primary.withOpacity(0.6),
+                      )
+                    : Image.file(
+                        File(ruta!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.broken_image_outlined,
+                          color: scheme.primary.withOpacity(0.6),
+                        ),
                       ),
+              ),
+              const SizedBox(width: 10),
+              // Botones pequeños apilados a la derecha de la miniatura
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _BotonMini(
+                          icono: Icons.photo_library_outlined,
+                          etiqueta: ruta == null ? 'Galería' : 'Cambiar',
+                          onTap: onGaleria,
+                        ),
+                        _BotonMini(
+                          icono: Icons.photo_camera_outlined,
+                          etiqueta: 'Cámara',
+                          onTap: onCamara,
+                        ),
+                        if (onQuitar != null)
+                          _BotonMini(
+                            icono: Icons.delete_outline,
+                            etiqueta: 'Quitar',
+                            onTap: onQuitar!,
+                            color: scheme.error,
+                          ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Botón pequeño reutilizable para la fila de acciones de cada foto.
+class _BotonMini extends StatelessWidget {
+  final IconData icono;
+  final String etiqueta;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _BotonMini({
+    required this.icono,
+    required this.etiqueta,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final colorFinal = color ?? scheme.primary;
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icono, size: 16, color: colorFinal),
+      label: Text(
+        etiqueta,
+        style: TextStyle(fontSize: 12, color: colorFinal),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        side: BorderSide(color: colorFinal.withOpacity(0.5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
