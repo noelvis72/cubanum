@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'camara_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 import '../db/database_helper.dart';
 import '../models/moneda.dart';
 
@@ -371,21 +371,9 @@ class _FormScreenState extends State<FormScreen> {
 
 Future<String?> _elegirYcopiarImagen(ImageSource source) async {
   try {
-    // Pedir permiso de cámara si es necesario
-    if (source == ImageSource.camera) {
-      final status = await Permission.camera.request();
-      if (!status.isGranted) {
-        if (!mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permiso de cámara denegado')),
-        );
-        return null;
-      }
-    }
-
     final pick = await _picker.pickImage(
       source: source,
-      imageQuality: 85, // Reduce el tamaño para evitar OOM
+      imageQuality: 85,
       maxWidth: 2000,
       maxHeight: 2000,
     );
@@ -408,18 +396,37 @@ Future<String?> _elegirYcopiarImagen(ImageSource source) async {
     return null;
   }
 }
-  Future<void> _seleccionarFoto(String cual, ImageSource source) async {
-    final nueva = await _elegirYcopiarImagen(source);
-    if (nueva == null || !mounted) return;
-    setState(() {
-      switch (cual) {
-        case 'anverso': _fotoAnverso = nueva; break;
-        case 'reverso': _fotoReverso = nueva; break;
-        case 'canto':   _fotoCanto   = nueva; break;
-        case 'km':      _fotoKm      = nueva; break;
-      }
-    });
-  }
+  /// Elige una foto desde la galería usando image_picker.
+Future<void> _seleccionarFoto(String cual) async {
+  final nueva = await _elegirYcopiarImagen(ImageSource.gallery);
+  if (nueva == null || !mounted) return;
+  setState(() {
+    switch (cual) {
+      case 'anverso': _fotoAnverso = nueva; break;
+      case 'reverso': _fotoReverso = nueva; break;
+      case 'canto':   _fotoCanto   = nueva; break;
+      case 'km':      _fotoKm      = nueva; break;
+    }
+  });
+}
+
+/// Toma una foto con la cámara interna de Flutter (CamaraScreen).
+/// Este método NO saca la app a segundo plano, así que no se pierde el formulario.
+Future<void> _tomarFotoConCamara(String cual) async {
+  final ruta = await Navigator.push<String>(
+    context,
+    MaterialPageRoute(builder: (_) => const CamaraScreen()),
+  );
+  if (ruta == null || !mounted) return;
+  setState(() {
+    switch (cual) {
+      case 'anverso': _fotoAnverso = ruta; break;
+      case 'reverso': _fotoReverso = ruta; break;
+      case 'canto':   _fotoCanto   = ruta; break;
+      case 'km':      _fotoKm      = ruta; break;
+    }
+  });
+}
 
   void _quitarFoto(String cual) {
     setState(() {
@@ -888,29 +895,29 @@ Future<String?> _elegirYcopiarImagen(ImageSource source) async {
                   _SelectorImagen(
                     etiqueta: 'Anverso',
                     ruta: _fotoAnverso,
-                    onGaleria: () => _seleccionarFoto('anverso', ImageSource.gallery),
-                    onCamara: () => _seleccionarFoto('anverso', ImageSource.camera),
+                    onGaleria: () => _seleccionarFoto('anverso'),
+                    onCamara: () => _tomarFotoConCamara('anverso'),
                     onQuitar: _fotoAnverso == null ? null : () => _quitarFoto('anverso'),
                   ),
                   _SelectorImagen(
                     etiqueta: 'Reverso',
                     ruta: _fotoReverso,
-                    onGaleria: () => _seleccionarFoto('reverso', ImageSource.gallery),
-                    onCamara: () => _seleccionarFoto('reverso', ImageSource.camera),
+                    onGaleria: () => _seleccionarFoto('reverso'),
+                    onCamara: () => _tomarFotoConCamara('reverso'),
                     onQuitar: _fotoReverso == null ? null : () => _quitarFoto('reverso'),
                   ),
                   _SelectorImagen(
                     etiqueta: 'Canto (opcional)',
                     ruta: _fotoCanto,
-                    onGaleria: () => _seleccionarFoto('canto', ImageSource.gallery),
-                    onCamara: () => _seleccionarFoto('canto', ImageSource.camera),
+                    onGaleria: () => _seleccionarFoto('canto'),
+                    onCamara: () => _tomarFotoConCamara('canto'),
                     onQuitar: _fotoCanto == null ? null : () => _quitarFoto('canto'),
                   ),
                   _SelectorImagen(
                     etiqueta: 'KM# (opcional)',
                     ruta: _fotoKm,
-                    onGaleria: () => _seleccionarFoto('km', ImageSource.gallery),
-                    onCamara: () => _seleccionarFoto('km', ImageSource.camera),
+                    onGaleria: () => _seleccionarFoto('km'),
+                    onCamara: () => _tomarFotoConCamara('km'),
                     onQuitar: _fotoKm == null ? null : () => _quitarFoto('km'),
                   ),
                 ],
