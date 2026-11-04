@@ -192,7 +192,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
              ],
            ),
             _BloqueDetalle(
-              titulo: 'Estado y autenticidad',
+              titulo: 'Conservación y Autenticidad',
               icono: Icons.verified_outlined,
               filas: [
                 _FilaDato('Grado Sheldon', m.gradoSheldon),
@@ -201,7 +201,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
               ],
             ),
             _BloqueDetalle(
-              titulo: 'Adquisición y valoración',
+              titulo: 'Adquisición y Valoración',
               icono: Icons.shopping_bag_outlined,
               filas: [
                 if (m.precioCompra != null)
@@ -218,7 +218,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
               ],
             ),
             _BloqueDetalle(
-              titulo: 'Ubicación y notas',
+              titulo: 'Ubicación y Notas',
               icono: Icons.inventory_2_outlined,
               filas: [
                 _FilaDato('Ubicación', m.ubicacion),
