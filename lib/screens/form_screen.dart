@@ -58,7 +58,8 @@ class _FormScreenState extends State<FormScreen> {
   String _autenticidad = 'Original';
   String _monedaPrecio = 'CUP';
   String _valorEstimadoMoneda = 'CUP';
-
+  String _monedaVenta = 'CUP';
+  
   DateTime? _fechaCompra;
   DateTime? _fechaVenta;
 
@@ -219,6 +220,7 @@ class _FormScreenState extends State<FormScreen> {
     _autenticidad  = (m != null && m.autenticidad.isNotEmpty) ? m.autenticidad : 'Original';
     _monedaPrecio  = (m != null && m.monedaPrecio.isNotEmpty) ? m.monedaPrecio : 'CUP';
     _valorEstimadoMoneda = (m != null && m.valorEstimadoMoneda.isNotEmpty) ? m.valorEstimadoMoneda : 'CUP';
+    _monedaVenta = (m != null && m.monedaVenta.isNotEmpty) ? m.monedaVenta : 'CUP';
     _fechaCompra   = m?.fechaCompra;
     _fechaVenta    = m?.fechaVenta;
     _fotoAnverso   = m?.fotoAnverso;
@@ -487,6 +489,7 @@ Future<void> _tomarFotoConCamara(String cual) async {
       valorEstimado: vEstimadoVal,
       valorEstimadoMoneda: _valorEstimadoMoneda,
       precioVenta: pVentaVal,
+      monedaVenta: _monedaVenta,
       fechaVenta: _fechaVenta,
       fotoAnverso: _fotoAnverso,
       fotoReverso: _fotoReverso,
@@ -836,6 +839,13 @@ Future<void> _tomarFotoConCamara(String cual) async {
       icono: Icons.sell_outlined,
       tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
       formatters: _numFormatters,
+    ),
+        _Dropdown<String>(
+      etiqueta: 'Moneda de la venta',
+      icono: Icons.currency_exchange,
+      valor: _monedaVenta,
+      items: _monedasPrecio,
+      onChanged: (v) => setState(() => _monedaVenta = v ?? 'CUP'),
     ),
     _SelectorFecha(
       etiqueta: 'Fecha de venta',
