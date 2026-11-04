@@ -34,6 +34,7 @@ class Moneda {
   final double? valorEstimado;
   final String valorEstimadoMoneda;
   final double? precioVenta;
+  final String monedaVenta;
   final DateTime? fechaVenta;
 
   // Multimedia
@@ -76,6 +77,7 @@ class Moneda {
     this.valorEstimado,
     required this.valorEstimadoMoneda,
     this.precioVenta,
+    required this.monedaVenta,
     this.fechaVenta,
     this.fotoAnverso,
     this.fotoReverso,
@@ -115,6 +117,7 @@ class Moneda {
         valorEstimado: null,
         valorEstimadoMoneda: 'CUP',
         precioVenta: null,
+        monedaVenta: 'CUP',
         fechaVenta: null,
         fotoAnverso: null,
         fotoReverso: null,
@@ -156,6 +159,7 @@ class Moneda {
         'valor_estimado': valorEstimado,
         'valor_estimado_moneda': valorEstimadoMoneda,
         'precio_venta': precioVenta,
+        'moneda_venta': monedaVenta,
         'fecha_venta': _fechaATexto(fechaVenta),
         'foto_anverso': fotoAnverso,
         'foto_reverso': fotoReverso,
@@ -195,6 +199,7 @@ class Moneda {
         valorEstimado: _aDouble(map['valor_estimado']),
         valorEstimadoMoneda: (map['valor_estimado_moneda'] as String?) ?? 'CUP',
         precioVenta: _aDouble(map['precio_venta']),
+        monedaVenta: (map['moneda_venta'] as String?) ?? 'CUP',
         fechaVenta: _aFecha(map['fecha_venta']),
         fotoAnverso: map['foto_anverso'] as String?,
         fotoReverso: map['foto_reverso'] as String?,
@@ -266,6 +271,7 @@ class Moneda {
     double? valorEstimado,
     String? valorEstimadoMoneda,
     double? precioVenta,
+    String? monedaVenta,
     DateTime? fechaVenta,
     String? fotoAnverso,
     String? fotoReverso,
@@ -317,6 +323,7 @@ class Moneda {
       valorEstimado: limpiarValorEstimado ? null : (valorEstimado ?? this.valorEstimado),
       valorEstimadoMoneda: valorEstimadoMoneda ?? this.valorEstimadoMoneda,
       precioVenta: limpiarPrecioVenta ? null : (precioVenta ?? this.precioVenta),
+      monedaVenta: monedaVenta ?? this.monedaVenta,
       fechaVenta: limpiarFechaVenta ? null : (fechaVenta ?? this.fechaVenta),
       fotoAnverso: limpiarFotoAnverso ? null : (fotoAnverso ?? this.fotoAnverso),
       fotoReverso: limpiarFotoReverso ? null : (fotoReverso ?? this.fotoReverso),
