@@ -212,7 +212,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
                 if (m.valorEstimado != null)
                   _FilaDato('Valor estimado', _precio(m.valorEstimado!, m.monedaPrecio)),
                 if (m.precioVenta != null)
-                  _FilaDato('Precio de venta', _precio(m.precioVenta!, m.monedaPrecio)),
+                  _FilaDato('Precio de venta', _precio(m.precioVenta!, m.monedaVenta)),
                 if (m.fechaVenta != null)
                   _FilaDato('Fecha de venta', _fecha(m.fechaVenta!)),
               ],
