@@ -831,7 +831,7 @@ Future<void> _tomarFotoConCamara(String cual) async {
     const Divider(height: 28),
     Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text('Venta (opcional)', style: theme.textTheme.titleSmall),
+      child: Text('Venta (opcional)', style: theme.textTheme.titleLarge),
     ),
     _TextoForm(
       controller: _precioVentaCtrl,
