@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'camara_screen.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -363,8 +365,6 @@ class _FormScreenState extends State<FormScreen> {
   }
 
   // ---- Imágenes ----
-  
-// ... dentro del State ...
 
 Future<String?> _elegirYcopiarImagen(ImageSource source) async {
   try {
