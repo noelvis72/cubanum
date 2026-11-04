@@ -776,7 +776,7 @@ Future<void> _tomarFotoConCamara(String cual) async {
 
               // ---------------- Adquisición (parcial, se rediseña en Lote 3) ----------------
               _BloqueFormulario(
-  titulo: 'Adquisición y valoración',
+  titulo: 'Adquisición y Valoración',
   icono: Icons.shopping_bag_outlined,
   hijos: [
     _TextoForm(
@@ -891,7 +891,7 @@ Future<void> _tomarFotoConCamara(String cual) async {
 
               // ---------------- Ubicación y notas (sin etiquetas) ----------------
               _BloqueFormulario(
-                titulo: 'Ubicación y notas',
+                titulo: 'Ubicación y Notas',
                 icono: Icons.inventory_2_outlined,
                 hijos: [
                   _TextoForm(
