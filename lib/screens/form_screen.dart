@@ -719,7 +719,7 @@ Future<void> _tomarFotoConCamara(String cual) async {
 
               // ---------------- Estado y autenticidad (sin cambios) ----------------
               _BloqueFormulario(
-                titulo: 'Estado y autenticidad',
+                titulo: 'Conservación y Autenticidad',
                 icono: Icons.verified_outlined,
                 hijos: [
                   FormField<String>(
