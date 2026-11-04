@@ -126,10 +126,11 @@ class DatabaseHelper {
         )
       ''');
     }
-  }
+  
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN moneda_venta TEXT NOT NULL DEFAULT "CUP"');
     }
+  }
   // ---------------- Monedas ----------------
 
   Future<int> insertar(Moneda moneda) async {
