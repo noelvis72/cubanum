@@ -655,48 +655,34 @@ Future<void> _tomarFotoConCamara(String cual) async {
                 titulo: 'Características físicas',
                 icono: Icons.straighten,
                 hijos: [
-                  Row(children: [
-                    Expanded(
-                      child: _TextoForm(
-                        controller: _pesoCtrl,
-                        etiqueta: 'Peso (g)',
-                        icono: Icons.scale_outlined,
-                        tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                        formatters: _numFormatters,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _TextoForm(
-                        controller: _diametroCtrl,
-                        etiqueta: 'Diámetro (mm)',
-                        icono: Icons.radio_button_unchecked,
-                        tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                        formatters: _numFormatters,
-                      ),
-                    ),
-                  ]),
-                  Row(children: [
-                    Expanded(
-                      child: _TextoForm(
-                        controller: _grosorCtrl,
-                        etiqueta: 'Grosor (mm)',
-                        icono: Icons.height,
-                        tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                        formatters: _numFormatters,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _Dropdown<String>(
-                        etiqueta: 'Forma',
-                        icono: Icons.crop_free,
-                        valor: _formaSeleccionada,
-                        items: _formas,
-                        onChanged: (v) => setState(() => _formaSeleccionada = v),
-                      ),
-                    ),
-                  ]),
+                  _TextoForm(
+                  controller: _pesoCtrl,
+                  etiqueta: 'Peso (g)',
+                  icono: Icons.scale_outlined,
+                  tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                  formatters: _numFormatters,
+                ),
+                 _TextoForm(
+                 controller: _diametroCtrl,
+                 etiqueta: 'Diámetro (mm)',
+                 icono: Icons.radio_button_unchecked,
+                 tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                 formatters: _numFormatters,
+               ),
+                _TextoForm(
+                controller: _grosorCtrl,
+                etiqueta: 'Grosor (mm)',
+                icono: Icons.height,
+                tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                formatters: _numFormatters,
+              ),
+                _Dropdown<String>(
+                etiqueta: 'Forma',
+                icono: Icons.crop_free,
+                valor: _formaSeleccionada,
+                items: _formas,
+                onChanged: (v) => setState(() => _formaSeleccionada = v),
+              ),
                   // Metal (movido a características) con dropdown + OTRO
                   _DropdownConOtro(
                     etiqueta: 'Metal',
@@ -790,99 +776,82 @@ Future<void> _tomarFotoConCamara(String cual) async {
 
               // ---------------- Adquisición (parcial, se rediseña en Lote 3) ----------------
               _BloqueFormulario(
-                titulo: 'Adquisición y valoración',
-                icono: Icons.shopping_bag_outlined,
-                hijos: [
-                  Row(children: [
-                    Expanded(
-                      flex: 2,
-                      child: _TextoForm(
-                        controller: _precioCompraCtrl,
-                        etiqueta: 'Precio de compra',
-                        icono: Icons.attach_money,
-                        tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                        formatters: _numFormatters,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _Dropdown<String>(
-                        etiqueta: 'Moneda',
-                        icono: Icons.currency_exchange,
-                        valor: _monedaPrecio,
-                        items: _monedasPrecio,
-                        onChanged: (v) => setState(() => _monedaPrecio = v ?? 'CUP'),
-                      ),
-                    ),
-                  ]),
-                  _SelectorFecha(
-                    etiqueta: 'Fecha de compra',
-                    valor: _fechaCompra,
-                    onElegir: () async {
-                      final f = await _elegirFecha(_fechaCompra);
-                      if (f != null && mounted) {
-                        setState(() => _fechaCompra = f);
-                      }
-                    },
-                    onLimpiar: _fechaCompra == null
-                        ? null
-                        : () => setState(() => _fechaCompra = null),
-                  ),
-                  _TextoForm(
-                    controller: _lugarCompraCtrl,
-                    etiqueta: 'Lugar de compra',
-                    icono: Icons.place_outlined,
-                  ),
-                  // Valor estimado + moneda
-                  Row(children: [
-                    Expanded(
-                      flex: 2,
-                      child: _TextoForm(
-                        controller: _valorEstimadoCtrl,
-                        etiqueta: 'Valor estimado',
-                        icono: Icons.trending_up,
-                        tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                        formatters: _numFormatters,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _Dropdown<String>(
-                        etiqueta: 'Moneda',
-                        icono: Icons.currency_exchange,
-                        valor: _valorEstimadoMoneda,
-                        items: _monedasPrecio,
-                        onChanged: (v) => setState(() => _valorEstimadoMoneda = v ?? 'CUP'),
-                      ),
-                    ),
-                  ]),
-                  const Divider(height: 28),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text('Venta (opcional)', style: theme.textTheme.titleSmall),
-                  ),
-                  _TextoForm(
-                    controller: _precioVentaCtrl,
-                    etiqueta: 'Precio de venta',
-                    icono: Icons.sell_outlined,
-                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                    formatters: _numFormatters,
-                  ),
-                  _SelectorFecha(
-                    etiqueta: 'Fecha de venta',
-                    valor: _fechaVenta,
-                    onElegir: () async {
-                      final f = await _elegirFecha(_fechaVenta);
-                      if (f != null && mounted) {
-                        setState(() => _fechaVenta = f);
-                      }
-                    },
-                    onLimpiar: _fechaVenta == null
-                        ? null
-                        : () => setState(() => _fechaVenta = null),
-                  ),
-                ],
-              ),
+  titulo: 'Adquisición y valoración',
+  icono: Icons.shopping_bag_outlined,
+  hijos: [
+    _TextoForm(
+      controller: _precioCompraCtrl,
+      etiqueta: 'Precio de compra',
+      icono: Icons.attach_money,
+      tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+      formatters: _numFormatters,
+    ),
+    _Dropdown<String>(
+      etiqueta: 'Moneda del precio',
+      icono: Icons.currency_exchange,
+      valor: _monedaPrecio,
+      items: _monedasPrecio,
+      onChanged: (v) => setState(() => _monedaPrecio = v ?? 'CUP'),
+    ),
+    _SelectorFecha(
+      etiqueta: 'Fecha de compra',
+      valor: _fechaCompra,
+      onElegir: () async {
+        final f = await _elegirFecha(_fechaCompra);
+        if (f != null && mounted) {
+          setState(() => _fechaCompra = f);
+        }
+      },
+      onLimpiar: _fechaCompra == null
+          ? null
+          : () => setState(() => _fechaCompra = null),
+    ),
+    _TextoForm(
+      controller: _lugarCompraCtrl,
+      etiqueta: 'Lugar de compra',
+      icono: Icons.place_outlined,
+    ),
+    _TextoForm(
+      controller: _valorEstimadoCtrl,
+      etiqueta: 'Valor estimado',
+      icono: Icons.trending_up,
+      tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+      formatters: _numFormatters,
+    ),
+    _Dropdown<String>(
+      etiqueta: 'Moneda del valor estimado',
+      icono: Icons.currency_exchange,
+      valor: _valorEstimadoMoneda,
+      items: _monedasPrecio,
+      onChanged: (v) => setState(() => _valorEstimadoMoneda = v ?? 'CUP'),
+    ),
+    const Divider(height: 28),
+    Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text('Venta (opcional)', style: theme.textTheme.titleSmall),
+    ),
+    _TextoForm(
+      controller: _precioVentaCtrl,
+      etiqueta: 'Precio de venta',
+      icono: Icons.sell_outlined,
+      tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+      formatters: _numFormatters,
+    ),
+    _SelectorFecha(
+      etiqueta: 'Fecha de venta',
+      valor: _fechaVenta,
+      onElegir: () async {
+        final f = await _elegirFecha(_fechaVenta);
+        if (f != null && mounted) {
+          setState(() => _fechaVenta = f);
+        }
+      },
+      onLimpiar: _fechaVenta == null
+          ? null
+          : () => setState(() => _fechaVenta = null),
+    ),
+  ],
+),
 
               // ---------------- Multimedia (con cámara) ----------------
               _BloqueFormulario(
@@ -1055,7 +1024,21 @@ class _Dropdown<T> extends StatelessWidget {
         isExpanded: true,
         decoration: InputDecoration(labelText: etiqueta, prefixIcon: Icon(icono)),
         items: items
-            .map((e) => DropdownMenuItem<T>(value: e, child: Text('$e')))
+            .map((e) => DropdownMenuItem<T>(
+                  value: e,
+                  child: Text('$e', overflow: TextOverflow.ellipsis),
+                ))
+            .toList(),
+        selectedItemBuilder: (context) => items
+            .map((e) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '$e',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ))
             .toList(),
         onChanged: onChanged,
       ),
