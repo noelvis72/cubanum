@@ -1,15 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permiso para Internet (necesario para Flutter en debug, inofensivo en release) -->
+
+    <!-- Permiso de Internet (necesario para Flutter en debug, inofensivo en release) -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- Permisos para image_picker -->
+    <!-- Permiso de cámara para el paquete camera -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Permisos para image_picker (galería) -->
     <!-- Android 12 y anteriores -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <!-- Android 13 y superior -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.CAMERA" />
+
     <application
-        android:label="CubaNum"
+        android:label="CUBANUM"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
