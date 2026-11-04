@@ -9,7 +9,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbNombre = 'cubanum.db';
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
   static const String tablaMonedas = 'monedas';
   static const String tablaPaises = 'paises_personalizados';
   static const String tablaMetales = 'metales_personalizados';
@@ -70,6 +70,7 @@ class DatabaseHelper {
         valor_estimado         REAL,
         valor_estimado_moneda  TEXT    NOT NULL DEFAULT 'CUP',
         precio_venta           REAL,
+        moneda_venta           TEXT    NOT NULL DEFAULT 'CUP',
         fecha_venta            TEXT,
         foto_anverso           TEXT,
         foto_reverso           TEXT,
@@ -126,7 +127,9 @@ class DatabaseHelper {
       ''');
     }
   }
-
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN moneda_venta TEXT NOT NULL DEFAULT "CUP"');
+    }
   // ---------------- Monedas ----------------
 
   Future<int> insertar(Moneda moneda) async {
