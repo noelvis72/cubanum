@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ThemeProvider extends ChangeNotifier {
-  static const _clave = 'cubanum_tema_oscuro';
+import 'app_theme.dart';
 
-  bool _oscuro = false;
-  bool get oscuro => _oscuro;
-  ThemeMode get modo => _oscuro ? ThemeMode.dark : ThemeMode.light;
+class ThemeProvider extends ChangeNotifier {
+  static const _clave = 'cubanum_tema_id';
+
+  AppThemeId _id = AppThemeId.claro;
+  AppThemeId get id => _id;
+
+  ThemeData get tema => AppTheme.porId(_id);
+  String get nombre => AppTheme.nombre(_id);
 
   ThemeProvider() {
     _cargar();
@@ -14,14 +18,22 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> _cargar() async {
     final prefs = await SharedPreferences.getInstance();
-    _oscuro = prefs.getBool(_clave) ?? false;
+    final guardado = prefs.getString(_clave);
+    if (guardado != null) {
+      try {
+        _id = AppThemeId.values.firstWhere((e) => e.name == guardado);
+      } catch (_) {
+        _id = AppThemeId.claro;
+      }
+    }
     notifyListeners();
   }
 
-  Future<void> alternar(bool valor) async {
-    _oscuro = valor;
+  Future<void> cambiar(AppThemeId nuevo) async {
+    if (nuevo == _id) return;
+    _id = nuevo;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_clave, valor);
+    await prefs.setString(_clave, nuevo.name);
   }
 }
