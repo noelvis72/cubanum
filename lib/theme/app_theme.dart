@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Identificador de los 5 temas disponibles.
+enum AppThemeId {
+  claro,
+  oscuro,
+  verde,
+  azul,
+  desierto,
+}
+
 class AppColors {
-  // ---- Tema claro ----
+  // ---- 1. Catálogo de museo (claro) ----
   static const Color claroFondo       = Color(0xFFF8F4EC);
   static const Color claroSuperficie  = Color(0xFFF1EADF);
   static const Color claroSuperficie2 = Color(0xFFEADFCB);
@@ -13,7 +22,7 @@ class AppColors {
   static const Color claroBorde       = Color(0xFFD9CDB8);
   static const Color claroError       = Color(0xFF9C3B2E);
 
-  // ---- Tema oscuro ----
+  // ---- 2. Gabinete nocturno (oscuro) ----
   static const Color oscuroFondo       = Color(0xFF12151C);
   static const Color oscuroSuperficie  = Color(0xFF1E222B);
   static const Color oscuroSuperficie2 = Color(0xFF262B36);
@@ -23,9 +32,43 @@ class AppColors {
   static const Color oscuroAcentoOsc   = Color(0xFF9A7B15);
   static const Color oscuroBorde       = Color(0xFF333A46);
   static const Color oscuroError       = Color(0xFFE07A6B);
+
+  // ---- 3. Verde pastel (relajante) ----
+  static const Color verdeFondo       = Color(0xFFE8F5E9);
+  static const Color verdeSuperficie  = Color(0xFFDCEEDE);
+  static const Color verdeSuperficie2 = Color(0xFFC9E2CC);
+  static const Color verdeTexto       = Color(0xFF2E4A34);
+  static const Color verdeTextoSuave  = Color(0xFF54735B);
+  static const Color verdeAcento      = Color(0xFF5C8A63);
+  static const Color verdeAcentoOsc   = Color(0xFF3F6B47);
+  static const Color verdeBorde       = Color(0xFFB8D4BC);
+  static const Color verdeError       = Color(0xFF8B3A2E);
+
+  // ---- 4. Azul suave (sereno) ----
+  static const Color azulFondo       = Color(0xFFE3F2FD);
+  static const Color azulSuperficie  = Color(0xFFD4E8F7);
+  static const Color azulSuperficie2 = Color(0xFFC0DCF2);
+  static const Color azulTexto       = Color(0xFF1A3A5C);
+  static const Color azulTextoSuave  = Color(0xFF486A8C);
+  static const Color azulAcento      = Color(0xFF3F6EA3);
+  static const Color azulAcentoOsc   = Color(0xFF2A4F7A);
+  static const Color azulBorde       = Color(0xFFA9C9E3);
+  static const Color azulError       = Color(0xFF8B3A2E);
+
+  // ---- 5. Desierto dorado (cálido) ----
+  static const Color desiertoFondo       = Color(0xFFFDF6E3);
+  static const Color desiertoSuperficie  = Color(0xFFF8EEC9);
+  static const Color desiertoSuperficie2 = Color(0xFFF1E1AC);
+  static const Color desiertoTexto       = Color(0xFF6B4F1D);
+  static const Color desiertoTextoSuave  = Color(0xFF8E7238);
+  static const Color desiertoAcento      = Color(0xFFB8862A);
+  static const Color desiertoAcentoOsc   = Color(0xFF8E6415);
+  static const Color desiertoBorde       = Color(0xFFE3D08A);
+  static const Color desiertoError       = Color(0xFF9C3B2E);
 }
 
 class AppTheme {
+  // ---------- Tipografías ----------
   static TextTheme _textos(Color color, Color suave) {
     final serif = GoogleFonts.ebGaramondTextTheme();
     final sans  = GoogleFonts.interTextTheme();
@@ -49,31 +92,37 @@ class AppTheme {
     );
   }
 
-  static ThemeData get claro {
-    const fondo      = AppColors.claroFondo;
-    const superficie = AppColors.claroSuperficie;
-    const texto      = AppColors.claroTexto;
-    const suave      = AppColors.claroTextoSuave;
-    const acento     = AppColors.claroAcento;
-    const borde      = AppColors.claroBorde;
-
+  /// Constructor genérico de un ThemeData a partir de una paleta.
+  static ThemeData _construir({
+    required Brightness brightness,
+    required Color fondo,
+    required Color superficie,
+    required Color superficie2,
+    required Color texto,
+    required Color suave,
+    required Color acento,
+    required Color acentoOsc,
+    required Color borde,
+    required Color error,
+    required Color onAcento,
+  }) {
     final scheme = ColorScheme(
-      brightness: Brightness.light,
+      brightness: brightness,
       primary: acento,
-      onPrimary: const Color(0xFFFFFBF2),
-      secondary: AppColors.claroAcentoOsc,
-      onSecondary: const Color(0xFFFFFBF2),
-      error: AppColors.claroError,
-      onError: const Color(0xFFFFFBF2),
+      onPrimary: onAcento,
+      secondary: acentoOsc,
+      onSecondary: onAcento,
+      error: error,
+      onError: onAcento,
       surface: superficie,
       onSurface: texto,
-      surfaceContainerHighest: AppColors.claroSuperficie2,
+      surfaceContainerHighest: superficie2,
       outline: borde,
     );
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
+      brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: fondo,
       canvasColor: fondo,
@@ -86,34 +135,36 @@ class AppTheme {
         titleTextStyle: GoogleFonts.ebGaramond(
           color: texto, fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: 1.2,
         ),
-        iconTheme: const IconThemeData(color: texto),
+        iconTheme: IconThemeData(color: texto),
       ),
       cardTheme: CardThemeData(
         color: superficie,
-        elevation: 2,
-        shadowColor: const Color(0x33000000),
+        elevation: brightness == Brightness.light ? 2 : 1,
+        shadowColor: brightness == Brightness.light
+            ? const Color(0x33000000)
+            : const Color(0x66000000),
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: borde, width: 0.6),
+          side: BorderSide(color: borde, width: 0.6),
         ),
       ),
-      dividerTheme: const DividerThemeData(color: borde, thickness: 0.6),
+      dividerTheme: DividerThemeData(color: borde, thickness: 0.6),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.claroSuperficie2,
+        fillColor: superficie2,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borde),
+          borderSide: BorderSide(color: borde),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borde),
+          borderSide: BorderSide(color: borde),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: acento, width: 1.4),
+          borderSide: BorderSide(color: acento, width: 1.4),
         ),
         labelStyle: GoogleFonts.inter(color: suave),
         hintStyle: GoogleFonts.inter(color: suave),
@@ -121,29 +172,33 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: acento,
-          foregroundColor: const Color(0xFFFFFBF2),
+          foregroundColor: onAcento,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.claroAcentoOsc),
+        style: TextButton.styleFrom(foregroundColor: acentoOsc),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: acento,
-        foregroundColor: Color(0xFFFFFBF2),
+        foregroundColor: onAcento,
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.claroSuperficie2,
+        backgroundColor: superficie2,
         selectedColor: acento.withOpacity(0.25),
-        side: const BorderSide(color: borde),
+        side: BorderSide(color: borde),
         labelStyle: GoogleFonts.inter(color: texto),
       ),
-      listTileTheme: const ListTileThemeData(iconColor: acento, textColor: texto),
+      listTileTheme: ListTileThemeData(iconColor: acento, textColor: texto),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? acento : const Color(0xFFBFB3A0),
+          (s) => s.contains(WidgetState.selected)
+              ? acento
+              : (brightness == Brightness.light
+                  ? const Color(0xFFBFB3A0)
+                  : const Color(0xFF4A5160)),
         ),
         trackColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected) ? acento.withOpacity(0.4) : borde,
@@ -159,113 +214,100 @@ class AppTheme {
     );
   }
 
-  static ThemeData get oscuro {
-    const fondo      = AppColors.oscuroFondo;
-    const superficie = AppColors.oscuroSuperficie;
-    const texto      = AppColors.oscuroTexto;
-    const suave      = AppColors.oscuroTextoSuave;
-    const acento     = AppColors.oscuroAcento;
-    const borde      = AppColors.oscuroBorde;
+  // ---------- Tema 1: Catálogo de museo ----------
+  static ThemeData get claro => _construir(
+        brightness: Brightness.light,
+        fondo: AppColors.claroFondo,
+        superficie: AppColors.claroSuperficie,
+        superficie2: AppColors.claroSuperficie2,
+        texto: AppColors.claroTexto,
+        suave: AppColors.claroTextoSuave,
+        acento: AppColors.claroAcento,
+        acentoOsc: AppColors.claroAcentoOsc,
+        borde: AppColors.claroBorde,
+        error: AppColors.claroError,
+        onAcento: const Color(0xFFFFFBF2),
+      );
 
-    final scheme = ColorScheme(
-      brightness: Brightness.dark,
-      primary: acento,
-      onPrimary: const Color(0xFF1A1408),
-      secondary: AppColors.oscuroAcentoOsc,
-      onSecondary: const Color(0xFF1A1408),
-      error: AppColors.oscuroError,
-      onError: const Color(0xFF1A1408),
-      surface: superficie,
-      onSurface: texto,
-      surfaceContainerHighest: AppColors.oscuroSuperficie2,
-      outline: borde,
-    );
+  // ---------- Tema 2: Gabinete nocturno ----------
+  static ThemeData get oscuro => _construir(
+        brightness: Brightness.dark,
+        fondo: AppColors.oscuroFondo,
+        superficie: AppColors.oscuroSuperficie,
+        superficie2: AppColors.oscuroSuperficie2,
+        texto: AppColors.oscuroTexto,
+        suave: AppColors.oscuroTextoSuave,
+        acento: AppColors.oscuroAcento,
+        acentoOsc: AppColors.oscuroAcentoOsc,
+        borde: AppColors.oscuroBorde,
+        error: AppColors.oscuroError,
+        onAcento: const Color(0xFF1A1408),
+      );
 
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: fondo,
-      canvasColor: fondo,
-      textTheme: _textos(texto, suave),
-      appBarTheme: AppBarTheme(
-        backgroundColor: fondo,
-        foregroundColor: texto,
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: GoogleFonts.ebGaramond(
-          color: texto, fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: 1.2,
-        ),
-        iconTheme: const IconThemeData(color: texto),
-      ),
-      cardTheme: CardThemeData(
-        color: superficie,
-        elevation: 1,
-        shadowColor: const Color(0x66000000),
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: borde, width: 0.7),
-        ),
-      ),
-      dividerTheme: const DividerThemeData(color: borde, thickness: 0.6),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.oscuroSuperficie2,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borde),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borde),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: acento, width: 1.4),
-        ),
-        labelStyle: GoogleFonts.inter(color: suave),
-        hintStyle: GoogleFonts.inter(color: suave),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: acento,
-          foregroundColor: const Color(0xFF1A1408),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: acento),
-      ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: acento,
-        foregroundColor: Color(0xFF1A1408),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: AppColors.oscuroSuperficie2,
-        selectedColor: acento.withOpacity(0.3),
-        side: const BorderSide(color: borde),
-        labelStyle: GoogleFonts.inter(color: texto),
-      ),
-      listTileTheme: const ListTileThemeData(iconColor: acento, textColor: texto),
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? acento : const Color(0xFF4A5160),
-        ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? acento.withOpacity(0.4) : borde,
-        ),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: superficie,
-        indicatorColor: acento.withOpacity(0.25),
-        labelTextStyle: WidgetStatePropertyAll(
-          GoogleFonts.inter(color: texto, fontSize: 12),
-        ),
-      ),
-    );
+  // ---------- Tema 3: Verde pastel ----------
+  static ThemeData get verde => _construir(
+        brightness: Brightness.light,
+        fondo: AppColors.verdeFondo,
+        superficie: AppColors.verdeSuperficie,
+        superficie2: AppColors.verdeSuperficie2,
+        texto: AppColors.verdeTexto,
+        suave: AppColors.verdeTextoSuave,
+        acento: AppColors.verdeAcento,
+        acentoOsc: AppColors.verdeAcentoOsc,
+        borde: AppColors.verdeBorde,
+        error: AppColors.verdeError,
+        onAcento: const Color(0xFFFFFFFF),
+      );
+
+  // ---------- Tema 4: Azul suave ----------
+  static ThemeData get azul => _construir(
+        brightness: Brightness.light,
+        fondo: AppColors.azulFondo,
+        superficie: AppColors.azulSuperficie,
+        superficie2: AppColors.azulSuperficie2,
+        texto: AppColors.azulTexto,
+        suave: AppColors.azulTextoSuave,
+        acento: AppColors.azulAcento,
+        acentoOsc: AppColors.azulAcentoOsc,
+        borde: AppColors.azulBorde,
+        error: AppColors.azulError,
+        onAcento: const Color(0xFFFFFFFF),
+      );
+
+  // ---------- Tema 5: Desierto dorado ----------
+  static ThemeData get desierto => _construir(
+        brightness: Brightness.light,
+        fondo: AppColors.desiertoFondo,
+        superficie: AppColors.desiertoSuperficie,
+        superficie2: AppColors.desiertoSuperficie2,
+        texto: AppColors.desiertoTexto,
+        suave: AppColors.desiertoTextoSuave,
+        acento: AppColors.desiertoAcento,
+        acentoOsc: AppColors.desiertoAcentoOsc,
+        borde: AppColors.desiertoBorde,
+        error: AppColors.desiertoError,
+        onAcento: const Color(0xFFFFFBF2),
+      );
+
+  /// Devuelve el ThemeData correspondiente a un AppThemeId.
+  static ThemeData porId(AppThemeId id) {
+    switch (id) {
+      case AppThemeId.claro:    return claro;
+      case AppThemeId.oscuro:   return oscuro;
+      case AppThemeId.verde:    return verde;
+      case AppThemeId.azul:     return azul;
+      case AppThemeId.desierto: return desierto;
+    }
+  }
+
+  /// Nombre legible del tema.
+  static String nombre(AppThemeId id) {
+    switch (id) {
+      case AppThemeId.claro:    return 'Catálogo de museo';
+      case AppThemeId.oscuro:   return 'Gabinete nocturno';
+      case AppThemeId.verde:    return 'Verde pastel';
+      case AppThemeId.azul:     return 'Azul suave';
+      case AppThemeId.desierto: return 'Desierto dorado';
+    }
   }
 }
