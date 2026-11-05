@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   camera: ^0.11.0
+  misri_hijri: ^0.1.7
   
   # Almacenamiento local
   sqflite: ^2.3.3
