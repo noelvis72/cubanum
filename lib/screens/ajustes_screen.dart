@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../db/database_helper.dart';
 import '../services/export_service.dart';
+import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
 
 class AjustesScreen extends StatefulWidget {
@@ -21,11 +22,15 @@ class _AjustesScreenState extends State<AjustesScreen> {
   int? _totalMonedas;
   bool _cargandoTotal = true;
   bool _exportando = false;
+  List<String> _paisesPersonalizados = [];
+  List<String> _metalesPersonalizados = [];
+  bool _cargandoListas = true;
 
   @override
   void initState() {
     super.initState();
     _cargarTotal();
+    _cargarListasPersonalizadas();
   }
 
   Future<void> _cargarTotal() async {
@@ -34,6 +39,17 @@ class _AjustesScreenState extends State<AjustesScreen> {
     setState(() {
       _totalMonedas = total;
       _cargandoTotal = false;
+    });
+  }
+
+  Future<void> _cargarListasPersonalizadas() async {
+    final paises = await _db.obtenerPaisesPersonalizados();
+    final metales = await _db.obtenerMetalesPersonalizados();
+    if (!mounted) return;
+    setState(() {
+      _paisesPersonalizados = paises;
+      _metalesPersonalizados = metales;
+      _cargandoListas = false;
     });
   }
 
@@ -137,6 +153,16 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
   }
 
+  Future<void> _eliminarPais(String nombre) async {
+    await _db.eliminarPaisPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+  }
+
+  Future<void> _eliminarMetal(String nombre) async {
+    await _db.eliminarMetalPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -147,22 +173,29 @@ class _AjustesScreenState extends State<AjustesScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
         children: [
+          // ---------------- Apariencia ----------------
           _SeccionAjustes(
             titulo: 'Apariencia',
             icono: Icons.palette_outlined,
             hijos: [
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text('Tema oscuro', style: theme.textTheme.bodyLarge),
-                subtitle: Text(
-                  themeProvider.oscuro ? 'Gabinete nocturno' : 'Catálogo de museo',
-                  style: theme.textTheme.bodySmall,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  'Tema actual: ${themeProvider.nombre}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
                 ),
-                value: themeProvider.oscuro,
-                onChanged: (v) => themeProvider.alternar(v),
+              ),
+              const SizedBox(height: 8),
+              _SelectorTemas(
+                actual: themeProvider.id,
+                onCambiar: (id) => themeProvider.cambiar(id),
               ),
             ],
           ),
+
+          // ---------------- Datos ----------------
           _SeccionAjustes(
             titulo: 'Datos',
             icono: Icons.storage_outlined,
@@ -223,6 +256,42 @@ class _AjustesScreenState extends State<AjustesScreen> {
               ),
             ],
           ),
+
+          // ---------------- Listas personalizadas ----------------
+          _SeccionAjustes(
+            titulo: 'Listas personalizadas',
+            icono: Icons.list_alt_outlined,
+            hijos: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'Países y metales que añadiste con "OTRO…"',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+              if (_cargandoListas)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                )
+              else ...[
+                _SubLista(
+                  titulo: 'Países',
+                  icono: Icons.public,
+                  items: _paisesPersonalizados,
+                  onEliminar: _eliminarPais,
+                ),
+                _SubLista(
+                  titulo: 'Metales',
+                  icono: Icons.bolt_outlined,
+                  items: _metalesPersonalizados,
+                  onEliminar: _eliminarMetal,
+                ),
+              ],
+            ],
+          ),
+
+          // ---------------- Peligro ----------------
           _SeccionAjustes(
             titulo: 'Peligro',
             icono: Icons.warning_amber_outlined,
@@ -244,6 +313,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
               ),
             ],
           ),
+
+          // ---------------- Acerca de ----------------
           _SeccionAjustes(
             titulo: 'Acerca de',
             icono: Icons.info_outline,
@@ -261,7 +332,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
                         color: theme.colorScheme.onSurface.withOpacity(0.75),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+                    _LineaAcerca('Desarrollador', 'Noelvis Torres Abreu'),
+                    const SizedBox(height: 4),
+                    _LineaAcerca('Programado en', 'Flutter 3.47.8 · Dart 3.13 · GitHub Actions'),
+                    const SizedBox(height: 10),
                     Text(
                       'Gestiona tu colección de monedas de forma local y '
                       'sin conexión: países, períodos, grados Sheldon, '
@@ -275,6 +350,188 @@ class _AjustesScreenState extends State<AjustesScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// =====================================================================
+// Selector de temas (5 tarjetas en horizontal)
+// =====================================================================
+
+class _SelectorTemas extends StatelessWidget {
+  final AppThemeId actual;
+  final ValueChanged<AppThemeId> onCambiar;
+
+  const _SelectorTemas({required this.actual, required this.onCambiar});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 108,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: AppThemeId.values.map((id) {
+          final t = AppTheme.porId(id);
+          final seleccionado = id == actual;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: InkWell(
+              onTap: () => onCambiar(id),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 96,
+                decoration: BoxDecoration(
+                  color: t.scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: seleccionado
+                        ? t.colorScheme.primary
+                        : t.colorScheme.outline,
+                    width: seleccionado ? 2 : 1,
+                  ),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Muestra de color
+                    Container(
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: t.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      AppTheme.nombre(id),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: t.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    if (seleccionado)
+                      Icon(
+                        Icons.check_circle,
+                        color: t.colorScheme.primary,
+                        size: 18,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// =====================================================================
+// Sub-lista de países/metales personalizados
+// =====================================================================
+
+class _SubLista extends StatelessWidget {
+  final String titulo;
+  final IconData icono;
+  final List<String> items;
+  final ValueChanged<String> onEliminar;
+
+  const _SubLista({
+    required this.titulo,
+    required this.icono,
+    required this.items,
+    required this.onEliminar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(icono, size: 18, color: theme.colorScheme.primary.withOpacity(0.5)),
+            const SizedBox(width: 8),
+            Text(
+              '$titulo: (ninguno)',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 2),
+          child: Row(
+            children: [
+              Icon(icono, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                '$titulo (${items.length})',
+                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+        ...items.map((n) => Padding(
+              padding: const EdgeInsets.only(left: 26, top: 2, bottom: 2),
+              child: Row(
+                children: [
+                  Expanded(child: Text(n, style: theme.textTheme.bodyMedium)),
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, size: 20, color: theme.colorScheme.error),
+                    tooltip: 'Eliminar',
+                    onPressed: () => onEliminar(n),
+                  ),
+                ],
+              ),
+            )),
+      ],
+    );
+  }
+}
+
+// =====================================================================
+// Utilidades
+// =====================================================================
+
+class _LineaAcerca extends StatelessWidget {
+  final String etiqueta;
+  final String valor;
+  const _LineaAcerca(this.etiqueta, this.valor);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            etiqueta,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.65),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(valor, style: theme.textTheme.bodyMedium),
+        ),
+      ],
     );
   }
 }
