@@ -292,23 +292,26 @@ class _TablaHejiraState extends State<_TablaHejira> {
   /// Determina si un año Hégira está dentro del rango exacto de Umm al-Qura.
   static bool _enRangoExacto(int h) => h >= _ummAlQuraMin && h <= _ummAlQuraMax;
 
-  /// Convierte Hégira -> Gregoriano con la mejor precisión disponible.
+    /// Convierte Hégira -> Gregoriano con la mejor precisión disponible.
   /// - Dentro de 1356–1500 AH: Umm al-Qura (tabla oficial).
-  /// - Fuera de rango: calendario Misri (tabular) aproximado.
+  /// - Fuera de rango: Misri (tabular) aproximado.
   static (DateTime, bool) _hejiraAGregoriano(int h) {
     final exacto = _enRangoExacto(h);
-    // Convertimos el 1 de Muharram del año Hégira indicado.
-    // misri_hijri espera (año, mes, día) en Hégira.
-    final hijri = HijriDate(h, 1, 1);
-    final greg = hijri.toGregorian();
-    return (greg, exacto);
+    final tipo = exacto ? HijriCalendarType.ummAlQura : HijriCalendarType.misri;
+    final hijri = Hijri.fromHijri(h, 1, 1, type: tipo);
+    return (hijri.toDateTime(), exacto);
   }
 
   /// Convierte Gregoriano -> Hégira.
   static (int, bool) _gregorianoAHejira(DateTime g) {
-    final hijri = HijriDate.fromGregorian(g);
-    final exacto = _enRangoExacto(hijri.year);
-    return (hijri.year, exacto);
+    // Primero probamos con Umm al-Qura; si el año resultante está fuera de
+    // rango, caemos a Misri (tabular).
+    final hijriUmm = Hijri.fromDate(g, type: HijriCalendarType.ummAlQura);
+    if (_enRangoExacto(hijriUmm.year)) {
+      return (hijriUmm.year, true);
+    }
+    final hijriMisri = Hijri.fromDate(g, type: HijriCalendarType.misri);
+    return (hijriMisri.year, false);
   }
 
   static final _mesesEs = <String>[
