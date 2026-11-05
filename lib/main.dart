@@ -4,7 +4,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
-import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
 
 Future<void> main() async {
@@ -25,9 +24,7 @@ class CubanumApp extends StatelessWidget {
           return MaterialApp(
             title: 'CUBANUM',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.claro,
-            darkTheme: AppTheme.oscuro,
-            themeMode: themeProvider.modo,
+            theme: themeProvider.tema,
             locale: const Locale('es'),
             supportedLocales: const [Locale('es'), Locale('en')],
             localizationsDelegates: const [
