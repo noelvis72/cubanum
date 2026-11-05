@@ -3,6 +3,8 @@ import 'package:path/path.dart' as p;
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'estadisticas_screen.dart';
+import 'referencias_screen.dart';
 
 import '../db/database_helper.dart';
 import '../services/export_service.dart';
@@ -291,6 +293,40 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ],
           ),
 
+                    // ---------------- Herramientas ----------------
+          _SeccionAjustes(
+            titulo: 'Herramientas numismáticas',
+            icono: Icons.menu_book_outlined,
+            hijos: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.numbers),
+                title: const Text('Referencias numismáticas'),
+                subtitle: const Text('Sistema numérico · Hégira ↔ Gregoriano'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ReferenciasScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.bar_chart_outlined),
+                title: const Text('Estadísticas'),
+                subtitle: const Text('Totales, invertido, valor estimado y ventas'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
+          
           // ---------------- Peligro ----------------
           _SeccionAjustes(
             titulo: 'Peligro',
