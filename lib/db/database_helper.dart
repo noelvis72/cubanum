@@ -178,21 +178,50 @@ class DatabaseHelper {
     return Moneda.fromMap(rows.first);
   }
 
-  Future<List<Moneda>> buscar(String query) async {
+    Future<List<Moneda>> buscar(String query) async {
     final q = query.trim();
     if (q.isEmpty) return obtenerTodas();
     final db = await database;
     final like = '%$q%';
+    final qLower = q.toLowerCase();
+
+    // Condiciones booleanas por palabra clave
+    final quiereConmemorativa = qLower == 'conmemorativa' ||
+        qLower == 'conmemorativas' ||
+        qLower == 'conmemorativo';
+    final quiereFao = qLower == 'fao';
+
+    final condiciones = <String>[
+      'pais           LIKE ?',
+      'denominacion   LIKE ?',
+      'anio           LIKE ?',
+      'km_catalogo    LIKE ?',
+      'ceca           LIKE ?',
+      'metal          LIKE ?',
+      'grado_sheldon  LIKE ?',
+      'periodo_acunacion LIKE ?',
+      'forma          LIKE ?',
+      'canto          LIKE ?',
+      'autenticidad   LIKE ?',
+      'lugar_compra   LIKE ?',
+      'ubicacion      LIKE ?',
+    ];
+    final args = <Object?>[
+      like, like, like, like, like, like, like, like, like,
+      like, like, like, like,
+    ];
+
+    if (quiereConmemorativa) {
+      condiciones.add('conmemorativa = 1');
+    }
+    if (quiereFao) {
+      condiciones.add('fao = 1');
+    }
+
     final rows = await db.query(
       tablaMonedas,
-      where: '''
-        pais           LIKE ?
-        OR denominacion LIKE ?
-        OR anio         LIKE ?
-        OR km_catalogo  LIKE ?
-        OR ceca         LIKE ?
-      ''',
-      whereArgs: [like, like, like, like, like],
+      where: condiciones.join(' OR '),
+      whereArgs: args,
       orderBy: 'pais COLLATE NOCASE ASC, anio ASC, denominacion COLLATE NOCASE ASC',
     );
     return rows.map(Moneda.fromMap).toList();
