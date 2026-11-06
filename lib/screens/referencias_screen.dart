@@ -332,88 +332,6 @@ class _TablaNumeracion extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Construimos la tabla con flutter_expandable_table (sticky headers).
-    final header = TableRow(
-      children: [
-        TableCell(
-          child: Container(
-            width: _anchoNombre,
-            height: _altoFila,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            alignment: Alignment.centerLeft,
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: Text(
-              'Sistema',
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
-        ..._columnas.map((c) => TableCell(
-              child: Container(
-                width: _anchoCelda,
-                height: _altoFila,
-                alignment: Alignment.center,
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Text(
-                  c == 'half' ? '½' : c,
-                  style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-            )),
-      ],
-    );
-
-    final rows = _sistemas.map((s) {
-      return TableRow(
-        children: [
-          TableCell(
-            child: Container(
-              width: _anchoNombre,
-              height: _altoFila,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              alignment: Alignment.centerLeft,
-              child: Tooltip(
-                message: s.nota,
-                child: Text(
-                  s.nombre,
-                  style: theme.textTheme.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          ),
-          ..._columnas.map((c) {
-            final valor = s.valores[c];
-            final vacia = valor == null || valor.isEmpty;
-            return TableCell(
-              child: Container(
-                width: _anchoCelda,
-                height: _altoFila,
-                alignment: Alignment.center,
-                color: vacia ? theme.colorScheme.surfaceContainerHighest : null,
-                child: vacia
-                    ? null
-                    : InkWell(
-                        onTap: () => _mostrarDialogo(context, s, c, valor),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: Text(
-                            valor,
-                            style: theme.textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.clip,
-                          ),
-                        ),
-                      ),
-              ),
-            );
-          }),
-        ],
-      );
-    }).toList();
-
     return Column(
       children: [
         Container(
@@ -447,7 +365,7 @@ class _TablaNumeracion extends StatelessWidget {
             ],
           ),
         ),
-                Expanded(
+        Expanded(
           child: ExpandableTable(
             firstHeaderCell: ExpandableTableCell(
               child: Container(
@@ -463,13 +381,15 @@ class _TablaNumeracion extends StatelessWidget {
             ),
             headers: _columnas.map((c) {
               return ExpandableTableHeader(
-                child: Container(
-                  width: _anchoCelda,
-                  height: _altoFila,
-                  alignment: Alignment.center,
-                  child: Text(
-                    c == 'half' ? '½' : c,
-                    style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                cell: ExpandableTableCell(
+                  child: Container(
+                    width: _anchoCelda,
+                    height: _altoFila,
+                    alignment: Alignment.center,
+                    child: Text(
+                      c == 'half' ? '½' : c,
+                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
               );
@@ -530,6 +450,8 @@ class _TablaNumeracion extends StatelessWidget {
             visibleScrollbar: true,
           ),
         ),
+      ],
+    );
   }
 
   void _mostrarDialogo(
@@ -597,29 +519,27 @@ class _TablaHejiraState extends State<_TablaHejira> {
 
   static bool _enRangoExacto(int h) => h >= _ummMin && h <= _ummMax;
 
-    /// Hégira -> Gregoriano (fecha del 1 de Muharram).
-  /// - Dentro de 1356–1500: hijri_plus (Umm al-Qura).
-  /// - Fuera: fórmula tabular manual (aproximada).
+  /// Hégira -> Gregoriano (fecha del 1 de Muharram).
+  /// Dentro de 1356–1500: hijri_plus (Umm al-Qura). Fuera: tabular manual.
   static (DateTime, bool) _hijriAGreg(int h) {
     if (_enRangoExacto(h)) {
       final calendar = hp.UmmAlQuraCalendar();
       final hijri = hp.HijriDate(h, 1, 1);
       final civil = calendar.toGregorian(hijri);
-      final g = civil.date; // GregorianDate
-      return (DateTime(g.year, g.month, g.day), true);
+      return (DateTime(civil.year, civil.month, civil.day), true);
     }
     // Fórmula tabular aproximada.
     final g = (h + 622 - (h * 0.970224)).round();
     return (DateTime(g, 1, 1), false);
   }
 
-  /// Gregoriano -> Hégira (año).
+  /// Gregoriano -> Hégira (año). Dentro de rango: Umm al-Qura. Fuera: tabular.
   static (int, bool) _gregAHijri(DateTime g) {
     if (g.year >= 1937 && g.year <= 2077) {
       final calendar = hp.UmmAlQuraCalendar();
       final civil = hp.GregorianDate(g.year, g.month, g.day);
       final hijri = calendar.toHijri(civil);
-      return (hijri.date.year, true);
+      return (hijri.year, true);
     }
     final h = ((g.year - 622) * 33 / 32).round();
     return (h, false);
