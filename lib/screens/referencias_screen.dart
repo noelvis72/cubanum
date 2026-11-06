@@ -540,34 +540,30 @@ class _TablaHejiraState extends State<_TablaHejira> {
 
   static bool _enRangoExacto(int h) => h >= _ummMin && h <= _ummMax;
 
-  /// Hégira -> Gregoriano (fecha del 1 de Muharram).
+    /// Hégira -> Gregoriano (fecha del 1 de Muharram).
   /// - Dentro de 1356–1500: hijri_plus (Umm al-Qura).
   /// - Fuera: fórmula tabular manual (aproximada).
   static (DateTime, bool) _hijriAGreg(int h) {
     if (_enRangoExacto(h)) {
-      final hj = hp.HijriCalendar.fromHijriDate(
-        hp.HijriDate(year: h, month: 1, day: 1),
-        calendarType: hp.CalendarType.ummAlQura,
-      );
-      final g = hj.toGregorianDate();
+      final calendar = hp.UmmAlQuraCalendar();
+      final hijri = hp.HijriDate(h, 1, 1);
+      final civil = calendar.toGregorian(hijri);
+      final g = civil.date; // GregorianDate
       return (DateTime(g.year, g.month, g.day), true);
     }
-    // Fórmula tabular: G ≈ H + 622 - (H / 33.7) aprox.
+    // Fórmula tabular aproximada.
     final g = (h + 622 - (h * 0.970224)).round();
     return (DateTime(g, 1, 1), false);
   }
 
   /// Gregoriano -> Hégira (año).
   static (int, bool) _gregAHijri(DateTime g) {
-    // Dentro del rango cubierto por hijri_plus (1937-2077)?
     if (g.year >= 1937 && g.year <= 2077) {
-      final hj = hp.HijriCalendar.fromDate(
-        hp.GregorianDate(year: g.year, month: g.month, day: g.day),
-        calendarType: hp.CalendarType.ummAlQura,
-      );
-      return (hj.hijriDate.year, true);
+      final calendar = hp.UmmAlQuraCalendar();
+      final civil = hp.GregorianDate(g.year, g.month, g.day);
+      final hijri = calendar.toHijri(civil);
+      return (hijri.date.year, true);
     }
-    // Fórmula tabular inversa.
     final h = ((g.year - 622) * 33 / 32).round();
     return (h, false);
   }
