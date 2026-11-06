@@ -8,8 +8,6 @@ import '../widgets/moneda_card.dart';
 import 'ajustes_screen.dart';
 import 'detalle_screen.dart';
 import 'form_screen.dart';
-import 'estadisticas_screen.dart';
-import 'referencias_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,24 +18,82 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _busquedaCtrl = TextEditingController();
+  final FocusNode _busquedaFocus = FocusNode();
   final DatabaseHelper _db = DatabaseHelper.instance;
 
   List<Moneda> _monedas = const [];
   bool _cargando = true;
   String _queryActual = '';
   Timer? _debounce;
+  OverlayEntry? _overlayAyuda;
 
   @override
   void initState() {
     super.initState();
+    _busquedaFocus.addListener(_onFocusCambia);
     _cargarMonedas();
   }
 
   @override
   void dispose() {
+    _quitarOverlay();
     _debounce?.cancel();
+    _busquedaFocus.removeListener(_onFocusCambia);
+    _busquedaFocus.dispose();
     _busquedaCtrl.dispose();
     super.dispose();
+  }
+
+  void _onFocusCambia() {
+    setState(() {}); // actualiza hint
+    if (_busquedaFocus.hasFocus) {
+      _mostrarOverlay();
+    } else {
+      _quitarOverlay();
+    }
+  }
+
+  void _mostrarOverlay() {
+    _quitarOverlay();
+    final overlay = Overlay.of(context);
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final offset = box.localToGlobal(Offset.zero);
+
+    _overlayAyuda = OverlayEntry(
+      builder: (ctx) => Positioned(
+        top: offset.dy + kToolbarHeight + 64,
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Theme.of(ctx).colorScheme.outline.withOpacity(0.5),
+              ),
+              boxShadow: const [
+                BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 2)),
+              ],
+            ),
+            child: Text(
+              'Puedes buscar por país, metal, año, grado Sheldon, '
+              'conmemorativas o FAO.',
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_overlayAyuda!);
+  }
+
+  void _quitarOverlay() {
+    _overlayAyuda?.remove();
+    _overlayAyuda = null;
   }
 
   Future<void> _cargarMonedas() async {
@@ -89,30 +145,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('C U B A N U M'),
+        title: _TituloCubanum(),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.menu_book_outlined),
-            tooltip: 'Referencias',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ReferenciasScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.bar_chart_outlined),
-            tooltip: 'Estadísticas',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Ajustes',
@@ -127,9 +165,34 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          _CampoBusqueda(
-            controller: _busquedaCtrl,
-            onChanged: _onBusquedaCambiada,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: TextField(
+              controller: _busquedaCtrl,
+              focusNode: _busquedaFocus,
+              onChanged: _onBusquedaCambiada,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: _busquedaFocus.hasFocus
+                    ? 'País, metal, año, Sheldon, FAO…'
+                    : 'Buscar en la colección…',
+                prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _busquedaCtrl,
+                  builder: (context, value, _) {
+                    if (value.text.isEmpty) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Borrar',
+                      onPressed: () {
+                        _busquedaCtrl.clear();
+                        _onBusquedaCambiada('');
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
           ),
           Expanded(
             child: _cargando
@@ -163,39 +226,49 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _CampoBusqueda extends StatelessWidget {
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-
-  const _CampoBusqueda({required this.controller, required this.onChanged});
-
+/// Título CUBANUM con 3 líneas de la bandera cubana encima del texto.
+class _TituloCubanum extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: 'Buscar por país, denominación, año, KM, ceca…',
-          prefixIcon: Icon(Icons.search, color: scheme.onSurface.withOpacity(0.6)),
-          suffixIcon: ValueListenableBuilder<TextEditingValue>(
-            valueListenable: controller,
-            builder: (context, value, _) {
-              if (value.text.isEmpty) return const SizedBox.shrink();
-              return IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: 'Borrar',
-                onPressed: () {
-                  controller.clear();
-                  onChanged('');
-                },
-              );
-            },
-          ),
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 3 líneas: azul, blanco, rojo
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            _LineaColor(color: Color(0xFF002A8F)), // azul turquí
+            SizedBox(width: 2),
+            _LineaColor(color: Colors.white),
+            SizedBox(width: 2),
+            _LineaColor(color: Color(0xFFCF142B)), // rojo
+          ],
         ),
+        const SizedBox(height: 2),
+        Text(
+          'CUBANUM',
+          style: theme.appBarTheme.titleTextStyle ??
+              theme.textTheme.titleLarge?.copyWith(letterSpacing: 1.2),
+        ),
+      ],
+    );
+  }
+}
+
+class _LineaColor extends StatelessWidget {
+  final Color color;
+  const _LineaColor({required this.color});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 16,
+      height: 3,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(1),
+        border: Border.all(color: Colors.black12, width: 0.3),
       ),
     );
   }
