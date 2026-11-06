@@ -413,7 +413,7 @@ class _TablaNumeracion extends StatelessWidget {
                     ),
                   ),
                 ),
-                children: _columnas.map((c) {
+                  cells: _columnas.map((c) {
                   final valor = s.valores[c];
                   final vacia = valor == null || valor.isEmpty;
                   return ExpandableTableCell(
@@ -526,7 +526,7 @@ class _TablaHejiraState extends State<_TablaHejira> {
       final calendar = hp.UmmAlQuraCalendar();
       final hijri = hp.HijriDate(h, 1, 1);
       final civil = calendar.toGregorian(hijri);
-      return (DateTime(civil.year, civil.month, civil.day), true);
+      return (DateTime(civil.date.year, civil.date.month, civil.date.day), true);
     }
     // Fórmula tabular aproximada.
     final g = (h + 622 - (h * 0.970224)).round();
@@ -539,7 +539,7 @@ class _TablaHejiraState extends State<_TablaHejira> {
       final calendar = hp.UmmAlQuraCalendar();
       final civil = hp.GregorianDate(g.year, g.month, g.day);
       final hijri = calendar.toHijri(civil);
-      return (hijri.year, true);
+      return (hijri.date.year, true);
     }
     final h = ((g.year - 622) * 33 / 32).round();
     return (h, false);
