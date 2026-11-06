@@ -447,32 +447,89 @@ class _TablaNumeracion extends StatelessWidget {
             ],
           ),
         ),
-        Expanded(
+                Expanded(
           child: ExpandableTable(
-            header: header,
-            rows: rows,
-            firstColumnWidth: _anchoNombre,
-            scrollShadowColor: theme.colorScheme.primary.withOpacity(0.3),
-            headerDecoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-            ),
-            firstColumnDecoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor,
-            ),
-            rowDecoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outline.withOpacity(0.2),
-                  width: 0.5,
+            firstHeaderCell: ExpandableTableCell(
+              child: Container(
+                width: _anchoNombre,
+                height: _altoFila,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Sistema',
+                  style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
-            defaultRowHeight: _altoFila,
-            defaultColumnWidth: _anchoCelda,
+            headers: _columnas.map((c) {
+              return ExpandableTableHeader(
+                child: Container(
+                  width: _anchoCelda,
+                  height: _altoFila,
+                  alignment: Alignment.center,
+                  child: Text(
+                    c == 'half' ? '½' : c,
+                    style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              );
+            }).toList(),
+            rows: _sistemas.map((s) {
+              return ExpandableTableRow(
+                firstCell: ExpandableTableCell(
+                  child: Container(
+                    width: _anchoNombre,
+                    height: _altoFila,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    alignment: Alignment.centerLeft,
+                    child: Tooltip(
+                      message: s.nota,
+                      child: Text(
+                        s.nombre,
+                        style: theme.textTheme.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+                children: _columnas.map((c) {
+                  final valor = s.valores[c];
+                  final vacia = valor == null || valor.isEmpty;
+                  return ExpandableTableCell(
+                    child: Container(
+                      width: _anchoCelda,
+                      height: _altoFila,
+                      alignment: Alignment.center,
+                      color: vacia ? theme.colorScheme.surfaceContainerHighest : null,
+                      child: vacia
+                          ? null
+                          : InkWell(
+                              onTap: () => _mostrarDialogo(context, s, c, valor),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2),
+                                child: Text(
+                                  valor,
+                                  style: theme.textTheme.bodyMedium,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.clip,
+                                ),
+                              ),
+                            ),
+                    ),
+                  );
+                }).toList(),
+              );
+            }).toList(),
+            firstColumnWidth: _anchoNombre,
+            defaultsColumnWidth: _anchoCelda,
+            defaultsRowHeight: _altoFila,
+            headerHeight: _altoFila,
+            scrollShadowColor: theme.colorScheme.primary.withOpacity(0.3),
+            visibleScrollbar: true,
           ),
         ),
-      ],
-    );
   }
 
   void _mostrarDialogo(
