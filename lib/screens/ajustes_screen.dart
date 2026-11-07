@@ -3,13 +3,12 @@ import 'package:path/path.dart' as p;
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'estadisticas_screen.dart';
-import 'referencias_screen.dart';
 
 import '../db/database_helper.dart';
 import '../services/export_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
+import 'referencias_screen.dart';
 
 class AjustesScreen extends StatefulWidget {
   const AjustesScreen({super.key});
@@ -259,6 +258,37 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ],
           ),
 
+          // ---------------- Herramientas numismáticas ----------------
+          _SeccionAjustes(
+            titulo: 'Herramientas numismáticas',
+            icono: Icons.menu_book_outlined,
+            hijos: [
+              _CardHerramienta(
+                titulo: 'Conversión\nHégira ↔ Gregoriano',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ReferenciasScreen(initialTab: 1),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              _CardHerramienta(
+                titulo: 'Sistemas Standard\nNumérico Internacional',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ReferenciasScreen(initialTab: 0),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+
           // ---------------- Listas personalizadas ----------------
           _SeccionAjustes(
             titulo: 'Listas personalizadas',
@@ -293,40 +323,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ],
           ),
 
-                    // ---------------- Herramientas ----------------
-          _SeccionAjustes(
-            titulo: 'Herramientas numismáticas',
-            icono: Icons.menu_book_outlined,
-            hijos: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.numbers),
-                title: const Text('Referencias numismáticas'),
-                subtitle: const Text('Sistema numérico · Hégira ↔ Gregoriano'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ReferenciasScreen()),
-                  );
-                },
-              ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.bar_chart_outlined),
-                title: const Text('Estadísticas'),
-                subtitle: const Text('Totales, invertido, valor estimado y ventas'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
-                  );
-                },
-              ),
-            ],
-          ),
-          
           // ---------------- Peligro ----------------
           _SeccionAjustes(
             titulo: 'Peligro',
@@ -391,7 +387,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 }
 
 // =====================================================================
-// Selector de temas (5 tarjetas en horizontal)
+// Selector de temas (5 tarjetas horizontales)
 // =====================================================================
 
 class _SelectorTemas extends StatelessWidget {
@@ -431,7 +427,6 @@ class _SelectorTemas extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Muestra de color
                     Container(
                       height: 32,
                       decoration: BoxDecoration(
@@ -463,6 +458,45 @@ class _SelectorTemas extends StatelessWidget {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+// =====================================================================
+// Tarjeta de acceso a herramienta
+// =====================================================================
+
+class _CardHerramienta extends StatelessWidget {
+  final String titulo;
+  final VoidCallback onTap;
+
+  const _CardHerramienta({required this.titulo, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.outline.withOpacity(0.4),
+            ),
+          ),
+          child: Text(
+            titulo,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(height: 1.3),
+          ),
+        ),
       ),
     );
   }
