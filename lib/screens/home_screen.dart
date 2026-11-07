@@ -8,6 +8,8 @@ import '../widgets/moneda_card.dart';
 import 'ajustes_screen.dart';
 import 'detalle_screen.dart';
 import 'form_screen.dart';
+import 'estadisticas_screen.dart';
+import 'referencias_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _cargando = true;
   String _queryActual = '';
   Timer? _debounce;
+  Timer? _overlayTimer;
   OverlayEntry? _overlayAyuda;
 
   @override
@@ -38,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _quitarOverlay();
     _debounce?.cancel();
+    _overlayTimer?.cancel();
     _busquedaFocus.removeListener(_onFocusCambia);
     _busquedaFocus.dispose();
     _busquedaCtrl.dispose();
@@ -45,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onFocusCambia() {
-    setState(() {}); // actualiza hint
+    setState(() {});
     if (_busquedaFocus.hasFocus) {
       _mostrarOverlay();
     } else {
@@ -62,7 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _overlayAyuda = OverlayEntry(
       builder: (ctx) => Positioned(
-        top: offset.dy + kToolbarHeight + 64,
+        // Posición más abajo (justo debajo del campo, con margen).
+        top: offset.dy + kToolbarHeight + 80,
         left: 16,
         right: 16,
         child: Material(
@@ -89,9 +94,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     overlay.insert(_overlayAyuda!);
+
+    // Auto-ocultar tras 7 segundos.
+    _overlayTimer?.cancel();
+    _overlayTimer = Timer(const Duration(seconds: 7), () {
+      _quitarOverlay();
+    });
   }
 
   void _quitarOverlay() {
+    _overlayTimer?.cancel();
+    _overlayTimer = null;
     _overlayAyuda?.remove();
     _overlayAyuda = null;
   }
@@ -143,14 +156,38 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) await _cargarMonedas();
   }
 
+  Future<void> _abrirReferencias() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ReferenciasScreen()),
+    );
+  }
+
+  Future<void> _abrirEstadisticas() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: _TituloCubanum(),
+        title: const _TituloCubanum(),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.menu_book_outlined),
+            tooltip: 'Referencias',
+            onPressed: _abrirReferencias,
+          ),
+          IconButton(
+            icon: const Icon(Icons.bar_chart_outlined),
+            tooltip: 'Estadísticas',
+            onPressed: _abrirEstadisticas,
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Ajustes',
@@ -226,49 +263,55 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// Título CUBANUM con 3 líneas de la bandera cubana encima del texto.
+/// Título CUBANUM con ShaderMask (gradiente azul-blanco-rojo) y estrella blanca
+/// superpuesta en el centro.
 class _TituloCubanum extends StatelessWidget {
+  const _TituloCubanum();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 3 líneas: azul, blanco, rojo
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            _LineaColor(color: Color(0xFF002A8F)), // azul turquí
-            SizedBox(width: 2),
-            _LineaColor(color: Colors.white),
-            SizedBox(width: 2),
-            _LineaColor(color: Color(0xFFCF142B)), // rojo
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          'CUBANUM',
-          style: theme.appBarTheme.titleTextStyle ??
-              theme.textTheme.titleLarge?.copyWith(letterSpacing: 1.2),
-        ),
-      ],
+    final baseStyle = (theme.appBarTheme.titleTextStyle ??
+            theme.textTheme.titleLarge?.copyWith(letterSpacing: 1.2))
+        ?.copyWith(
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1.2,
     );
-  }
-}
 
-class _LineaColor extends StatelessWidget {
-  final Color color;
-  const _LineaColor({required this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 16,
-      height: 3,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(1),
-        border: Border.all(color: Colors.black12, width: 0.3),
+    return SizedBox(
+      height: kToolbarHeight,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Texto con gradiente vertical azul-blanco-rojo.
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF002A8F), // azul turquí
+                Colors.white,       // blanco en el centro
+                Color(0xFFCF142B), // rojo
+              ],
+              stops: [0.0, 0.5, 1.0],
+            ).createShader(bounds),
+            child: Text(
+              'CUBANUM',
+              style: baseStyle?.copyWith(color: Colors.white),
+            ),
+          ),
+          // Estrella blanca en el centro, ligeramente superpuesta.
+          const IgnorePointer(
+            child: Icon(
+              Icons.star,
+              size: 14,
+              color: Colors.white,
+              shadows: [
+                Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
