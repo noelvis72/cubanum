@@ -3,19 +3,35 @@ import 'package:flutter_expandable_table/flutter_expandable_table.dart';
 import 'package:hijri_plus/hijri_plus.dart' as hp;
 
 class ReferenciasScreen extends StatelessWidget {
-  const ReferenciasScreen({super.key});
+  /// Pestaña inicial: 0 = Numeración internacional, 1 = Hégira ↔ Gregoriano.
+  final int initialTab;
+
+  const ReferenciasScreen({super.key, this.initialTab = 0});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
+      initialIndex: initialTab,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Referencias'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Numeración internacional'),
-              Tab(text: 'Hégira ↔ Gregoriano'),
+              Tab(
+                child: Text(
+                  'Numeración\ninternacional',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, height: 1.2),
+                ),
+              ),
+              Tab(
+                child: Text(
+                  'Hégira ↔\nGregoriano',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, height: 1.2),
+                ),
+              ),
             ],
           ),
         ),
@@ -324,7 +340,8 @@ const List<String> _notaInicial = [
 class _TablaNumeracion extends StatelessWidget {
   const _TablaNumeracion();
 
-  static const double _anchoNombre = 200;
+  // Ancho reducido para ver más columnas a la derecha.
+  static const double _anchoNombre = 140;
   static const double _anchoCelda = 56;
   static const double _altoFila = 48;
 
@@ -371,7 +388,7 @@ class _TablaNumeracion extends StatelessWidget {
               child: Container(
                 width: _anchoNombre,
                 height: _altoFila,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Sistema',
@@ -400,10 +417,10 @@ class _TablaNumeracion extends StatelessWidget {
                   child: Container(
                     width: _anchoNombre,
                     height: _altoFila,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
                     alignment: Alignment.centerLeft,
                     child: Tooltip(
-                      message: s.nota,
+                      message: s.nombre,
                       child: Text(
                         s.nombre,
                         style: theme.textTheme.bodySmall,
@@ -413,7 +430,7 @@ class _TablaNumeracion extends StatelessWidget {
                     ),
                   ),
                 ),
-                  cells: _columnas.map((c) {
+                cells: _columnas.map((c) {
                   final valor = s.valores[c];
                   final vacia = valor == null || valor.isEmpty;
                   return ExpandableTableCell(
@@ -520,7 +537,7 @@ class _TablaHejiraState extends State<_TablaHejira> {
   static bool _enRangoExacto(int h) => h >= _ummMin && h <= _ummMax;
 
   /// Hégira -> Gregoriano (fecha del 1 de Muharram).
-  /// Dentro de 1356–1500: hijri_plus (Umm al-Qura). Fuera: tabular manual.
+  /// Dentro de 1356–1500: hijri_plus (Umm al-Qura). Fuera: fórmula tabular.
   static (DateTime, bool) _hijriAGreg(int h) {
     if (_enRangoExacto(h)) {
       final calendar = hp.UmmAlQuraCalendar();
@@ -528,8 +545,8 @@ class _TablaHejiraState extends State<_TablaHejira> {
       final civil = calendar.toGregorian(hijri);
       return (DateTime(civil.date.year, civil.date.month, civil.date.day), true);
     }
-    // Fórmula tabular aproximada.
-    final g = (h + 622 - (h * 0.970224)).round();
+    // Fórmula tabular aproximada al año: G ≈ H + 622 - H/33.
+    final g = (h + 622 - (h / 33)).floor();
     return (DateTime(g, 1, 1), false);
   }
 
@@ -541,7 +558,8 @@ class _TablaHejiraState extends State<_TablaHejira> {
       final hijri = calendar.toHijri(civil);
       return (hijri.date.year, true);
     }
-    final h = ((g.year - 622) * 33 / 32).round();
+    // Fórmula tabular inversa: H ≈ (G - 622) * 33 / 32.
+    final h = ((g.year - 622) * 33 / 32).floor();
     return (h, false);
   }
 
@@ -575,14 +593,17 @@ class _TablaHejiraState extends State<_TablaHejira> {
       return;
     }
     final (fecha, exacto) = _hijriAGreg(n);
-    final motor = exacto ? 'Umm al-Qura (exacto)' : 'Tabular (aproximado)';
+    final motor = exacto ? 'Umm al-Qura (exacto)' : 'Tabular (aproximado ±1 año)';
+    final aviso = exacto
+        ? ''
+        : '\nConversión aproximada al año. Puede desviarse ±1 año.';
     setState(() {
       _errorHejira = null;
       _resultadoHejira =
           'El 1 de Muharram de $n H correspondió al '
           '${_fmtFecha(fecha)}.\n'
           'Año gregoriano aproximado: ${fecha.year} G.\n'
-          'Motor: $motor.';
+          'Motor: $motor.$aviso';
     });
   }
 
@@ -596,12 +617,15 @@ class _TablaHejiraState extends State<_TablaHejira> {
       return;
     }
     final (h, exacto) = _gregAHijri(DateTime(n, 1, 1));
-    final motor = exacto ? 'Umm al-Qura (exacto)' : 'Tabular (aproximado)';
+    final motor = exacto ? 'Umm al-Qura (exacto)' : 'Tabular (aproximado ±1 año)';
+    final aviso = exacto
+        ? ''
+        : '\nConversión aproximada al año. Puede desviarse ±1 año.';
     setState(() {
       _errorGreg = null;
       _resultadoGreg =
           'El 1 de enero de $n G cayó en el año $h H.\n'
-          'Motor: $motor.';
+          'Motor: $motor.$aviso';
     });
   }
 
@@ -648,7 +672,7 @@ class _TablaHejiraState extends State<_TablaHejira> {
                 child: Text(
                   'Conversión exacta (Umm al-Qura) para 1356–1500 H '
                   '(1937–2077 G). Fuera de ese rango se usa el calendario '
-                  'tabular (aproximado ±1-2 días).',
+                  'tabular (aproximado ±1 año).',
                   style: theme.textTheme.bodySmall,
                 ),
               ),
