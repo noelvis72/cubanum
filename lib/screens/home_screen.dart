@@ -132,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirFormulario() async {
+      _busquedaFocus.unfocus();
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const FormScreen()),
@@ -140,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirDetalle(Moneda moneda) async {
+      _busquedaFocus.unfocus();
     if (moneda.id == null) return;
     final resultado = await Navigator.push(
       context,
@@ -149,6 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirAjustes() async {
+      _busquedaFocus.unfocus();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AjustesScreen()),
@@ -157,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirReferencias() async {
+      _busquedaFocus.unfocus();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ReferenciasScreen()),
@@ -164,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirEstadisticas() async {
+      _busquedaFocus.unfocus();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
@@ -171,10 +176,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+Widget build(BuildContext context) {
+  final theme = Theme.of(context);
 
-    return Scaffold(
+  return GestureDetector(
+    onTap: () => FocusScope.of(context).unfocus(),
+    child: Scaffold(
       appBar: AppBar(
         title: const _TituloCubanum(),
         actions: [
@@ -213,7 +220,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 hintText: _busquedaFocus.hasFocus
                     ? 'País, metal, año, Sheldon, FAO…'
                     : 'Buscar en la colección…',
-                prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                prefixIcon: Icon(Icons.search,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6)),
                 suffixIcon: ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _busquedaCtrl,
                   builder: (context, value, _) {
@@ -238,8 +246,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildLista() {
     if (_monedas.isEmpty) {
@@ -274,41 +283,54 @@ class _TituloCubanum extends StatelessWidget {
     final baseStyle = (theme.appBarTheme.titleTextStyle ??
             theme.textTheme.titleLarge?.copyWith(letterSpacing: 1.2))
         ?.copyWith(
-      fontWeight: FontWeight.w700,
-      letterSpacing: 1.2,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 2.0,
+      fontSize: 22,
     );
 
     return SizedBox(
       height: kToolbarHeight,
       child: Stack(
-        alignment: Alignment.center,
+        alignment: Alignment.centerLeft,
         children: [
-          // Texto con gradiente vertical azul-blanco-rojo.
+          // Sombra negra de contorno
+          Text(
+            'CUBANUM',
+            style: baseStyle?.copyWith(
+              color: Colors.black,
+              shadows: const [
+                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, 1)),
+                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(-1, 1)),
+                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, -1)),
+                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(-1, -1)),
+              ],
+            ),
+          ),
+          // Texto con gradiente intenso
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF002A8F), // azul turquí
-                Colors.white,       // blanco en el centro
-                Color(0xFFCF142B), // rojo
+                Color(0xFF001C66),
+                Color(0xFF002A8F),
+                Color(0xFFFFFFFF),
+                Color(0xFFE00019),
+                Color(0xFF9B0011),
               ],
-              stops: [0.0, 0.5, 1.0],
+              stops: [0.0, 0.2, 0.5, 0.8, 1.0],
             ).createShader(bounds),
             child: Text(
               'CUBANUM',
               style: baseStyle?.copyWith(color: Colors.white),
             ),
           ),
-          // Estrella blanca en el centro, ligeramente superpuesta.
-          const IgnorePointer(
-            child: Icon(
-              Icons.star,
-              size: 14,
-              color: Colors.white,
-              shadows: [
-                Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
-              ],
+          // Estrella blanca en la C
+          const Positioned(
+            left: 5,
+            top: 10,
+            child: IgnorePointer(
+              child: Icon(Icons.star, size: 10, color: Colors.white),
             ),
           ),
         ],
