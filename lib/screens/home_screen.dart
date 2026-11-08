@@ -325,12 +325,12 @@ class _TituloCubanum extends StatelessWidget {
               style: baseStyle?.copyWith(color: Colors.white),
             ),
           ),
-          // Estrella blanca en la C
-          const Positioned(
-            left: 5,
-            top: 10,
-            child: IgnorePointer(
-              child: Icon(Icons.star, size: 10, color: Colors.white),
+          // Estrella blanca en el hueco central de la C
+          Positioned(
+            left: 6,
+            top: (kToolbarHeight - 8) / 2 - 2, // centrada verticalmente
+            child: const IgnorePointer(
+              child: Icon(Icons.star, size: 8, color: Colors.white),
             ),
           ),
         ],
