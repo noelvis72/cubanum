@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Identificador de los 5 temas disponibles.
+/// Identificador de los 6 temas disponibles.
 enum AppThemeId {
   claro,
   oscuro,
   verde,
   azul,
   desierto,
+  rosado,
 }
 
 class AppColors {
@@ -65,6 +66,17 @@ class AppColors {
   static const Color desiertoAcentoOsc   = Color(0xFF8E6415);
   static const Color desiertoBorde       = Color(0xFFE3D08A);
   static const Color desiertoError       = Color(0xFF9C3B2E);
+
+  // ---- 6. Rosado suave ----
+static const Color rosadoFondo       = Color(0xFFFDF0F4);
+static const Color rosadoSuperficie  = Color(0xFFF8E3EB);
+static const Color rosadoSuperficie2 = Color(0xFFF2D2DE);
+static const Color rosadoTexto       = Color(0xFF5C2E3D);
+static const Color rosadoTextoSuave  = Color(0xFF8A5F6E);
+static const Color rosadoAcento      = Color(0xFFB86580);
+static const Color rosadoAcentoOsc   = Color(0xFF8E4560);
+static const Color rosadoBorde       = Color(0xFFE8C4D0);
+static const Color rosadoError       = Color(0xFF9C3B2E);
 }
 
 class AppTheme {
@@ -289,6 +301,21 @@ class AppTheme {
         onAcento: const Color(0xFFFFFBF2),
       );
 
+  // ---------- Tema 6: Rosado suave ----------
+static ThemeData get rosado => _construir(
+      brightness: Brightness.light,
+      fondo: AppColors.rosadoFondo,
+      superficie: AppColors.rosadoSuperficie,
+      superficie2: AppColors.rosadoSuperficie2,
+      texto: AppColors.rosadoTexto,
+      suave: AppColors.rosadoTextoSuave,
+      acento: AppColors.rosadoAcento,
+      acentoOsc: AppColors.rosadoAcentoOsc,
+      borde: AppColors.rosadoBorde,
+      error: AppColors.rosadoError,
+      onAcento: const Color(0xFFFFFFFF),
+    );
+
   /// Devuelve el ThemeData correspondiente a un AppThemeId.
   static ThemeData porId(AppThemeId id) {
     switch (id) {
@@ -297,6 +324,7 @@ class AppTheme {
       case AppThemeId.verde:    return verde;
       case AppThemeId.azul:     return azul;
       case AppThemeId.desierto: return desierto;
+      case AppThemeId.rosado:   return rosado;
     }
   }
 
@@ -308,6 +336,7 @@ class AppTheme {
       case AppThemeId.verde:    return 'Verde pastel';
       case AppThemeId.azul:     return 'Azul suave';
       case AppThemeId.desierto: return 'Desierto dorado';
+      case AppThemeId.rosado:   return 'Rosado suave';
     }
   }
 }
