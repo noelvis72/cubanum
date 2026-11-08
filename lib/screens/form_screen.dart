@@ -1,14 +1,15 @@
 import 'dart:io';
-import 'camara_screen.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
 import '../db/database_helper.dart';
 import '../models/moneda.dart';
+import 'camara_screen.dart';
 
 class FormScreen extends StatefulWidget {
   final Moneda? moneda;
@@ -24,14 +25,13 @@ class _FormScreenState extends State<FormScreen> {
   final _picker = ImagePicker();
   final _db = DatabaseHelper.instance;
 
-  // ---- Controladores de texto ----
-  late final TextEditingController _paisCtrl; // solo se usa para "OTRO" manual legacy
+  late final TextEditingController _paisCtrl;
   late final TextEditingController _periodoCtrl;
   late final TextEditingController _denominacionCtrl;
   late final TextEditingController _anioCtrl;
   late final TextEditingController _cecaCtrl;
   late final TextEditingController _kmCtrl;
-  late final TextEditingController _metalCtrl; // solo "OTRO" manual
+  late final TextEditingController _metalCtrl;
   late final TextEditingController _acunadasCtrl;
   late final TextEditingController _pesoCtrl;
   late final TextEditingController _diametroCtrl;
@@ -45,7 +45,6 @@ class _FormScreenState extends State<FormScreen> {
   late final TextEditingController _ubicacionCtrl;
   late final TextEditingController _notasCtrl;
 
-  // ---- Estado no textual ----
   bool _perteneceOnu = false;
   bool _conmemorativa = false;
   bool _fao = false;
@@ -59,7 +58,7 @@ class _FormScreenState extends State<FormScreen> {
   String _monedaPrecio = 'CUP';
   String _valorEstimadoMoneda = 'CUP';
   String _monedaVenta = 'CUP';
-  
+
   DateTime? _fechaCompra;
   DateTime? _fechaVenta;
 
@@ -70,46 +69,24 @@ class _FormScreenState extends State<FormScreen> {
 
   bool _guardando = false;
 
-  // ---- Listas personalizadas cargadas de BD ----
   List<String> _paisesPersonalizados = [];
   List<String> _metalesPersonalizados = [];
+  List<String> _cantosPersonalizados = [];
 
-  // ---- Listas fijas ----
   static const _formas = <String>[
-    'Redonda',
-    'Triangular',
-    'Cuadrada',
-    'Ovalada',
-    'Rectangular',
-    'Múltiples lados',
+    'Redonda', 'Triangular', 'Cuadrada', 'Ovalada', 'Rectangular', 'Múltiples lados',
   ];
 
   static const _cantos = <String>[
-    'Estriado',
-    'Serrado',
-    'Epigráfico con leyenda',
-    'Estriado interrumpido',
-    'Reticulado',
-    'Acanalado',
-    'En espiguilla',
+    'Liso', 'Estriado', 'Serrado', 'Epigráfico con leyenda',
+    'Estriado interrumpido', 'Reticulado', 'Acanalado', 'En espiguilla',
   ];
 
   static const _alineaciones = <String>['Medalla', 'Moneda'];
 
   static const _metalesBase = <String>[
-    'Oro',
-    'Plata',
-    'Cobre',
-    'Bronce',
-    'Latón',
-    'CuNi',
-    'Aluminio',
-    'Zinc',
-    'Hierro',
-    'Platino',
-    'Bimetálica',
-    'Trimetálica',
-    'Acero recubierto',
+    'Oro', 'Plata', 'Cobre', 'Bronce', 'Latón', 'CuNi', 'Aluminio',
+    'Zinc', 'Hierro', 'Platino', 'Bimetálica', 'Trimetálica', 'Acero recubierto',
   ];
 
   static const _gradosSheldon = <String>[
@@ -123,8 +100,6 @@ class _FormScreenState extends State<FormScreen> {
 
   static const _monedasPrecio = <String>['EUR', 'USD', 'CUP'];
 
-  /// Lista extensa de países (base ISO + territorios y países históricos comunes).
-  /// Los añadidos por el usuario se guardan aparte en BD.
   static const _paisesBase = <String>[
     'Afganistán', 'Albania', 'Alemania', 'Andorra', 'Angola',
     'Antigua y Barbuda', 'Arabia Saudita', 'Argelia', 'Argentina', 'Armenia',
@@ -165,7 +140,6 @@ class _FormScreenState extends State<FormScreen> {
     'Turquía', 'Tuvalu', 'Ucrania', 'Uganda', 'Uruguay',
     'Uzbekistán', 'Vanuatu', 'Vaticano', 'Venezuela', 'Vietnam',
     'Yemen', 'Yibuti', 'Zambia', 'Zimbabue',
-    // Territorios y países históricos comunes en numismática
     'Antillas Neerlandesas', 'Hong Kong', 'Macao', 'Puerto Rico',
     'Islas Caimán', 'Islas Feroe', 'Groenlandia', 'Gibraltar',
     'Islas Malvinas', 'Nueva Caledonia', 'Polinesia Francesa', 'Reunión',
@@ -229,12 +203,10 @@ class _FormScreenState extends State<FormScreen> {
     _fotoKm        = m?.fotoKm;
     _gradoSheldon  = (m != null && m.gradoSheldon.isNotEmpty) ? m.gradoSheldon : null;
 
-    // Selecciones desde el modelo
     if (m != null) {
       if (_paisesBase.contains(m.pais)) {
         _paisSeleccionado = m.pais;
       } else if (m.pais.isNotEmpty) {
-        // País guardado previamente: lo tratamos como personalizado.
         _paisSeleccionado = m.pais;
       }
       if (_formas.contains(m.forma)) _formaSeleccionada = m.forma;
@@ -244,6 +216,7 @@ class _FormScreenState extends State<FormScreen> {
         _metalSeleccionado = m.metal;
       }
       if (_cantos.contains(m.canto)) _cantoSeleccionado = m.canto;
+      if (m.canto.isNotEmpty) _cantoSeleccionado = m.canto;
       if (_alineaciones.contains(m.alineacion)) _alineacionSeleccionada = m.alineacion;
     }
 
@@ -253,10 +226,12 @@ class _FormScreenState extends State<FormScreen> {
   Future<void> _cargarListasPersonalizadas() async {
     final paises = await _db.obtenerPaisesPersonalizados();
     final metales = await _db.obtenerMetalesPersonalizados();
+    final cantos = await _db.obtenerCantosPersonalizados();
     if (!mounted) return;
     setState(() {
       _paisesPersonalizados = paises;
       _metalesPersonalizados = metales;
+      _cantosPersonalizados = cantos;
     });
   }
 
@@ -274,7 +249,6 @@ class _FormScreenState extends State<FormScreen> {
     super.dispose();
   }
 
-  // ---- Utilidades ----
   static String _numATexto(double? v) {
     if (v == null) return '';
     if (v == v.roundToDouble()) return v.toStringAsFixed(0);
@@ -308,7 +282,6 @@ class _FormScreenState extends State<FormScreen> {
     return f;
   }
 
-  // ---- Diálogo genérico para "OTRO" ----
   Future<String?> _pedirTextoNuevo({
     required String titulo,
     required String hint,
@@ -366,66 +339,74 @@ class _FormScreenState extends State<FormScreen> {
     setState(() => _metalSeleccionado = nombre);
   }
 
-  // ---- Imágenes ----
-
-Future<String?> _elegirYcopiarImagen(ImageSource source) async {
-  try {
-    final pick = await _picker.pickImage(
-      source: source,
-      imageQuality: 85,
-      maxWidth: 2000,
-      maxHeight: 2000,
+  Future<void> _agregarCantoPersonalizado() async {
+    final nombre = await _pedirTextoNuevo(
+      titulo: 'Añadir canto',
+      hint: 'Ej: Canto con inscripción',
     );
-    if (pick == null) return null;
-    final dirDocs = await getApplicationDocumentsDirectory();
-    final dirFotos = Directory(p.join(dirDocs.path, 'fotos'));
-    if (!await dirFotos.exists()) {
-      await dirFotos.create(recursive: true);
-    }
-    final ext = p.extension(pick.path);
-    final nombre = '${DateTime.now().microsecondsSinceEpoch}$ext';
-    final destino = p.join(dirFotos.path, nombre);
-    await File(pick.path).copy(destino);
-    return destino;
-  } catch (e) {
-    if (!mounted) return null;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('No se pudo cargar la imagen: $e')),
-    );
-    return null;
+    if (nombre == null || !mounted) return;
+    await _db.insertarCantoPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+    if (!mounted) return;
+    setState(() => _cantoSeleccionado = nombre);
   }
-}
-  /// Elige una foto desde la galería usando image_picker.
-Future<void> _seleccionarFoto(String cual) async {
-  final nueva = await _elegirYcopiarImagen(ImageSource.gallery);
-  if (nueva == null || !mounted) return;
-  setState(() {
-    switch (cual) {
-      case 'anverso': _fotoAnverso = nueva; break;
-      case 'reverso': _fotoReverso = nueva; break;
-      case 'canto':   _fotoCanto   = nueva; break;
-      case 'km':      _fotoKm      = nueva; break;
-    }
-  });
-}
 
-/// Toma una foto con la cámara interna de Flutter (CamaraScreen).
-/// Este método NO saca la app a segundo plano, así que no se pierde el formulario.
-Future<void> _tomarFotoConCamara(String cual) async {
-  final ruta = await Navigator.push<String>(
-    context,
-    MaterialPageRoute(builder: (_) => const CamaraScreen()),
-  );
-  if (ruta == null || !mounted) return;
-  setState(() {
-    switch (cual) {
-      case 'anverso': _fotoAnverso = ruta; break;
-      case 'reverso': _fotoReverso = ruta; break;
-      case 'canto':   _fotoCanto   = ruta; break;
-      case 'km':      _fotoKm      = ruta; break;
+  Future<String?> _elegirYcopiarImagen(ImageSource source) async {
+    try {
+      final pick = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 2000,
+        maxHeight: 2000,
+      );
+      if (pick == null) return null;
+      final dirDocs = await getApplicationDocumentsDirectory();
+      final dirFotos = Directory(p.join(dirDocs.path, 'fotos'));
+      if (!await dirFotos.exists()) {
+        await dirFotos.create(recursive: true);
+      }
+      final ext = p.extension(pick.path);
+      final nombre = '${DateTime.now().microsecondsSinceEpoch}$ext';
+      final destino = p.join(dirFotos.path, nombre);
+      await File(pick.path).copy(destino);
+      return destino;
+    } catch (e) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo cargar la imagen: $e')),
+      );
+      return null;
     }
-  });
-}
+  }
+
+  Future<void> _seleccionarFoto(String cual) async {
+    final nueva = await _elegirYcopiarImagen(ImageSource.gallery);
+    if (nueva == null || !mounted) return;
+    setState(() {
+      switch (cual) {
+        case 'anverso': _fotoAnverso = nueva; break;
+        case 'reverso': _fotoReverso = nueva; break;
+        case 'canto':   _fotoCanto   = nueva; break;
+        case 'km':      _fotoKm      = nueva; break;
+      }
+    });
+  }
+
+  Future<void> _tomarFotoConCamara(String cual) async {
+    final ruta = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const CamaraScreen()),
+    );
+    if (ruta == null || !mounted) return;
+    setState(() {
+      switch (cual) {
+        case 'anverso': _fotoAnverso = ruta; break;
+        case 'reverso': _fotoReverso = ruta; break;
+        case 'canto':   _fotoCanto   = ruta; break;
+        case 'km':      _fotoKm      = ruta; break;
+      }
+    });
+  }
 
   void _quitarFoto(String cual) {
     setState(() {
@@ -438,7 +419,6 @@ Future<void> _tomarFotoConCamara(String cual) async {
     });
   }
 
-  // ---- Guardar ----
   Future<void> _guardar() async {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) {
@@ -539,28 +519,28 @@ Future<void> _tomarFotoConCamara(String cual) async {
     Navigator.pop(context, true);
   }
 
-  // ---- Build ----
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final titulo = widget.esEdicion ? 'Editar moneda' : 'Nueva moneda';
 
-    // Lista completa de países: base + personalizados (sin duplicar)
     final paisesCompletos = <String>{
       ..._paisesBase,
       ..._paisesPersonalizados,
-      if (_paisSeleccionado != null && _paisSeleccionado!.isNotEmpty)
-        _paisSeleccionado!,
-    }.toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      if (_paisSeleccionado != null && _paisSeleccionado!.isNotEmpty) _paisSeleccionado!,
+    }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     final metalesCompletos = <String>{
       ..._metalesBase,
       ..._metalesPersonalizados,
-      if (_metalSeleccionado != null && _metalSeleccionado!.isNotEmpty)
-        _metalSeleccionado!,
-    }.toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      if (_metalSeleccionado != null && _metalSeleccionado!.isNotEmpty) _metalSeleccionado!,
+    }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    final cantosCompletos = <String>{
+      ..._cantos,
+      ..._cantosPersonalizados,
+      if (_cantoSeleccionado != null && _cantoSeleccionado!.isNotEmpty) _cantoSeleccionado!,
+    }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     return Scaffold(
       appBar: AppBar(title: Text(titulo)),
@@ -586,7 +566,6 @@ Future<void> _tomarFotoConCamara(String cual) async {
                 titulo: 'Identificación',
                 icono: Icons.badge_outlined,
                 hijos: [
-                  // País con dropdown + OTRO
                   _DropdownConOtro(
                     etiqueta: 'País *',
                     icono: Icons.public,
@@ -659,34 +638,33 @@ Future<void> _tomarFotoConCamara(String cual) async {
                 icono: Icons.straighten,
                 hijos: [
                   _TextoForm(
-                  controller: _pesoCtrl,
-                  etiqueta: 'Peso (g)',
-                  icono: Icons.scale_outlined,
-                  tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                  formatters: _numFormatters,
-                ),
-                 _TextoForm(
-                 controller: _diametroCtrl,
-                 etiqueta: 'Diámetro (mm)',
-                 icono: Icons.radio_button_unchecked,
-                 tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                 formatters: _numFormatters,
-               ),
-                _TextoForm(
-                controller: _grosorCtrl,
-                etiqueta: 'Grosor (mm)',
-                icono: Icons.height,
-                tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-                formatters: _numFormatters,
-              ),
-                _Dropdown<String>(
-                etiqueta: 'Forma',
-                icono: Icons.crop_free,
-                valor: _formaSeleccionada,
-                items: _formas,
-                onChanged: (v) => setState(() => _formaSeleccionada = v),
-              ),
-                  // Metal (movido a características) con dropdown + OTRO
+                    controller: _pesoCtrl,
+                    etiqueta: 'Peso (g)',
+                    icono: Icons.scale_outlined,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                    formatters: _numFormatters,
+                  ),
+                  _TextoForm(
+                    controller: _diametroCtrl,
+                    etiqueta: 'Diámetro (mm)',
+                    icono: Icons.radio_button_unchecked,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                    formatters: _numFormatters,
+                  ),
+                  _TextoForm(
+                    controller: _grosorCtrl,
+                    etiqueta: 'Grosor (mm)',
+                    icono: Icons.height,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                    formatters: _numFormatters,
+                  ),
+                  _Dropdown<String>(
+                    etiqueta: 'Forma',
+                    icono: Icons.crop_free,
+                    valor: _formaSeleccionada,
+                    items: _formas,
+                    onChanged: (v) => setState(() => _formaSeleccionada = v),
+                  ),
                   _DropdownConOtro(
                     etiqueta: 'Metal',
                     icono: Icons.bolt_outlined,
@@ -703,12 +681,14 @@ Future<void> _tomarFotoConCamara(String cual) async {
                     tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
                     formatters: _numFormatters,
                   ),
-                  _Dropdown<String>(
+                  _DropdownConOtro(
                     etiqueta: 'Canto',
                     icono: Icons.line_weight,
                     valor: _cantoSeleccionado,
-                    items: _cantos,
+                    items: cantosCompletos,
                     onChanged: (v) => setState(() => _cantoSeleccionado = v),
+                    onAgregarOtro: _agregarCantoPersonalizado,
+                    validadorObligatorio: false,
                   ),
                   _Dropdown<String>(
                     etiqueta: 'Alineación',
@@ -720,9 +700,9 @@ Future<void> _tomarFotoConCamara(String cual) async {
                 ],
               ),
 
-              // ---------------- Estado y autenticidad (sin cambios) ----------------
+              // ---------------- Conservación y autenticidad ----------------
               _BloqueFormulario(
-                titulo: 'Conservación y Autenticidad',
+                titulo: 'Conservación y autenticidad',
                 icono: Icons.verified_outlined,
                 hijos: [
                   FormField<String>(
@@ -746,10 +726,7 @@ Future<void> _tomarFotoConCamara(String cual) async {
                               errorText: state.errorText,
                             ),
                             items: _gradosSheldon
-                                .map((e) => DropdownMenuItem<String>(
-                                      value: e,
-                                      child: Text(e),
-                                    ))
+                                .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
                                 .toList(),
                             onChanged: (v) {
                               setState(() => _gradoSheldon = v);
@@ -777,93 +754,85 @@ Future<void> _tomarFotoConCamara(String cual) async {
                 ],
               ),
 
-              // ---------------- Adquisición (parcial, se rediseña en Lote 3) ----------------
+              // ---------------- Adquisición y valoración ----------------
               _BloqueFormulario(
-  titulo: 'Adquisición y Valoración',
-  icono: Icons.shopping_bag_outlined,
-  hijos: [
-    _TextoForm(
-      controller: _precioCompraCtrl,
-      etiqueta: 'Precio de compra',
-      icono: Icons.attach_money,
-      tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-      formatters: _numFormatters,
-    ),
-    _Dropdown<String>(
-      etiqueta: 'Moneda del precio',
-      icono: Icons.currency_exchange,
-      valor: _monedaPrecio,
-      items: _monedasPrecio,
-      onChanged: (v) => setState(() => _monedaPrecio = v ?? 'CUP'),
-    ),
-    _SelectorFecha(
-      etiqueta: 'Fecha de compra',
-      valor: _fechaCompra,
-      onElegir: () async {
-        final f = await _elegirFecha(_fechaCompra);
-        if (f != null && mounted) {
-          setState(() => _fechaCompra = f);
-        }
-      },
-      onLimpiar: _fechaCompra == null
-          ? null
-          : () => setState(() => _fechaCompra = null),
-    ),
-    _TextoForm(
-      controller: _lugarCompraCtrl,
-      etiqueta: 'Lugar de compra',
-      icono: Icons.place_outlined,
-    ),
-    _TextoForm(
-      controller: _valorEstimadoCtrl,
-      etiqueta: 'Valor estimado',
-      icono: Icons.trending_up,
-      tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-      formatters: _numFormatters,
-    ),
-    _Dropdown<String>(
-      etiqueta: 'Moneda del valor estimado',
-      icono: Icons.currency_exchange,
-      valor: _valorEstimadoMoneda,
-      items: _monedasPrecio,
-      onChanged: (v) => setState(() => _valorEstimadoMoneda = v ?? 'CUP'),
-    ),
-    const Divider(height: 28),
-    Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text('Venta (opcional)', style: theme.textTheme.titleLarge),
-    ),
-    _TextoForm(
-      controller: _precioVentaCtrl,
-      etiqueta: 'Precio de venta',
-      icono: Icons.sell_outlined,
-      tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
-      formatters: _numFormatters,
-    ),
-        _Dropdown<String>(
-      etiqueta: 'Moneda de la venta',
-      icono: Icons.currency_exchange,
-      valor: _monedaVenta,
-      items: _monedasPrecio,
-      onChanged: (v) => setState(() => _monedaVenta = v ?? 'CUP'),
-    ),
-    _SelectorFecha(
-      etiqueta: 'Fecha de venta',
-      valor: _fechaVenta,
-      onElegir: () async {
-        final f = await _elegirFecha(_fechaVenta);
-        if (f != null && mounted) {
-          setState(() => _fechaVenta = f);
-        }
-      },
-      onLimpiar: _fechaVenta == null
-          ? null
-          : () => setState(() => _fechaVenta = null),
-    ),
-  ],
-),
+                titulo: 'Adquisición y valoración',
+                icono: Icons.shopping_bag_outlined,
+                hijos: [
+                  _TextoForm(
+                    controller: _precioCompraCtrl,
+                    etiqueta: 'Precio de compra',
+                    icono: Icons.attach_money,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                    formatters: _numFormatters,
+                  ),
+                  _Dropdown<String>(
+                    etiqueta: 'Moneda del precio',
+                    icono: Icons.currency_exchange,
+                    valor: _monedaPrecio,
+                    items: _monedasPrecio,
+                    onChanged: (v) => setState(() => _monedaPrecio = v ?? 'CUP'),
+                  ),
+                  _SelectorFecha(
+                    etiqueta: 'Fecha de compra',
+                    valor: _fechaCompra,
+                    onElegir: () async {
+                      final f = await _elegirFecha(_fechaCompra);
+                      if (f != null && mounted) setState(() => _fechaCompra = f);
+                    },
+                    onLimpiar: _fechaCompra == null ? null : () => setState(() => _fechaCompra = null),
+                  ),
+                  _TextoForm(
+                    controller: _lugarCompraCtrl,
+                    etiqueta: 'Lugar de compra',
+                    icono: Icons.place_outlined,
+                  ),
+                  _TextoForm(
+                    controller: _valorEstimadoCtrl,
+                    etiqueta: 'Valor estimado',
+                    icono: Icons.trending_up,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                    formatters: _numFormatters,
+                  ),
+                  _Dropdown<String>(
+                    etiqueta: 'Moneda del valor estimado',
+                    icono: Icons.currency_exchange,
+                    valor: _valorEstimadoMoneda,
+                    items: _monedasPrecio,
+                    onChanged: (v) => setState(() => _valorEstimadoMoneda = v ?? 'CUP'),
+                  ),
+                  const Divider(height: 28),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text('Venta (opcional)', style: theme.textTheme.titleMedium),
+                  ),
+                  _TextoForm(
+                    controller: _precioVentaCtrl,
+                    etiqueta: 'Precio de venta',
+                    icono: Icons.sell_outlined,
+                    tipoTeclado: const TextInputType.numberWithOptions(decimal: true),
+                    formatters: _numFormatters,
+                  ),
+                  _Dropdown<String>(
+                    etiqueta: 'Moneda de la venta',
+                    icono: Icons.currency_exchange,
+                    valor: _monedaVenta,
+                    items: _monedasPrecio,
+                    onChanged: (v) => setState(() => _monedaVenta = v ?? 'CUP'),
+                  ),
+                  _SelectorFecha(
+                    etiqueta: 'Fecha de venta',
+                    valor: _fechaVenta,
+                    onElegir: () async {
+                      final f = await _elegirFecha(_fechaVenta);
+                      if (f != null && mounted) setState(() => _fechaVenta = f);
+                    },
+                    onLimpiar: _fechaVenta == null ? null : () => setState(() => _fechaVenta = null),
+                  ),
+                ],
+              ),
 
-              // ---------------- Multimedia (con cámara) ----------------
+              // ---------------- Multimedia ----------------
               _BloqueFormulario(
                 titulo: 'Multimedia',
                 icono: Icons.photo_camera_outlined,
@@ -899,9 +868,9 @@ Future<void> _tomarFotoConCamara(String cual) async {
                 ],
               ),
 
-              // ---------------- Ubicación y notas (sin etiquetas) ----------------
+              // ---------------- Ubicación y notas ----------------
               _BloqueFormulario(
-                titulo: 'Ubicación y Notas',
+                titulo: 'Ubicación y notas',
                 icono: Icons.inventory_2_outlined,
                 hijos: [
                   _TextoForm(
@@ -993,8 +962,7 @@ class _TextoForm extends StatelessWidget {
         maxLines: maxLineas,
         keyboardType: tipoTeclado,
         inputFormatters: formatters,
-        textInputAction:
-            maxLineas > 1 ? TextInputAction.newline : TextInputAction.next,
+        textInputAction: maxLineas > 1 ? TextInputAction.newline : TextInputAction.next,
         decoration: InputDecoration(
           labelText: etiqueta,
           prefixIcon: Icon(icono),
@@ -1056,8 +1024,6 @@ class _Dropdown<T> extends StatelessWidget {
   }
 }
 
-/// Dropdown que incluye la opción "OTRO…" al final, que dispara un callback
-/// para pedir un nuevo valor (país/metal personalizado).
 class _DropdownConOtro extends StatelessWidget {
   final String etiqueta;
   final IconData icono;
@@ -1079,7 +1045,6 @@ class _DropdownConOtro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Copiamos la lista y añadimos "OTRO" al final (solo visualmente).
     final itemsVisibles = <String>[...items, 'OTRO…'];
 
     return Padding(
@@ -1087,18 +1052,14 @@ class _DropdownConOtro extends StatelessWidget {
       child: DropdownButtonFormField<String>(
         value: (valor == null || valor!.isEmpty) ? null : valor,
         isExpanded: true,
-        decoration: InputDecoration(
-          labelText: etiqueta,
-          prefixIcon: Icon(icono),
-        ),
+        decoration: InputDecoration(labelText: etiqueta, prefixIcon: Icon(icono)),
         items: itemsVisibles
             .map((e) => DropdownMenuItem<String>(
                   value: e,
                   child: Text(
                     e,
-                    style: e == 'OTRO…'
-                        ? const TextStyle(fontStyle: FontStyle.italic)
-                        : null,
+                    style: e == 'OTRO…' ? const TextStyle(fontStyle: FontStyle.italic) : null,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ))
             .toList(),
@@ -1169,9 +1130,6 @@ class _SelectorFecha extends StatelessWidget {
   }
 }
 
-/// Selector de imagen con miniatura + botón galería + botón cámara + quitar.
-/// Selector de imagen con miniatura arriba y fila de botones debajo.
-/// Layout compacto que no se desborda ni se desalinea.
 class _SelectorImagen extends StatelessWidget {
   final String etiqueta;
   final String? ruta;
@@ -1197,14 +1155,11 @@ class _SelectorImagen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Etiqueta del campo
           Text(etiqueta, style: theme.textTheme.bodyLarge),
           const SizedBox(height: 6),
-          // Miniatura + botones en fila
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Miniatura
               Container(
                 width: 72,
                 height: 72,
@@ -1215,10 +1170,7 @@ class _SelectorImagen extends StatelessWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: ruta == null
-                    ? Icon(
-                        Icons.image_outlined,
-                        color: scheme.primary.withOpacity(0.6),
-                      )
+                    ? Icon(Icons.image_outlined, color: scheme.primary.withOpacity(0.6))
                     : Image.file(
                         File(ruta!),
                         fit: BoxFit.cover,
@@ -1229,34 +1181,38 @@ class _SelectorImagen extends StatelessWidget {
                       ),
               ),
               const SizedBox(width: 10),
-              // Botones pequeños apilados a la derecha de la miniatura
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                    Row(
                       children: [
-                        _BotonMini(
-                          icono: Icons.photo_library_outlined,
-                          etiqueta: ruta == null ? 'Galería' : 'Cambiar',
-                          onTap: onGaleria,
-                        ),
-                        _BotonMini(
-                          icono: Icons.photo_camera_outlined,
-                          etiqueta: 'Cámara',
-                          onTap: onCamara,
-                        ),
-                        if (onQuitar != null)
-                          _BotonMini(
-                            icono: Icons.delete_outline,
-                            etiqueta: 'Quitar',
-                            onTap: onQuitar!,
-                            color: scheme.error,
+                        Expanded(
+                          child: _BotonMini(
+                            icono: Icons.photo_library_outlined,
+                            etiqueta: ruta == null ? 'Galería' : 'Cambiar',
+                            onTap: onGaleria,
                           ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _BotonMini(
+                            icono: Icons.photo_camera_outlined,
+                            etiqueta: 'Cámara',
+                            onTap: onCamara,
+                          ),
+                        ),
                       ],
                     ),
+                    if (onQuitar != null) ...[
+                      const SizedBox(height: 6),
+                      _BotonMini(
+                        icono: Icons.delete_outline,
+                        etiqueta: 'Quitar imagen',
+                        onTap: onQuitar!,
+                        color: scheme.error,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1268,7 +1224,6 @@ class _SelectorImagen extends StatelessWidget {
   }
 }
 
-/// Botón pequeño reutilizable para la fila de acciones de cada foto.
 class _BotonMini extends StatelessWidget {
   final IconData icono;
   final String etiqueta;
@@ -1292,10 +1247,12 @@ class _BotonMini extends StatelessWidget {
       label: Text(
         etiqueta,
         style: TextStyle(fontSize: 12, color: colorFinal),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        minimumSize: const Size(0, 32),
+        minimumSize: const Size(0, 34),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         side: BorderSide(color: colorFinal.withOpacity(0.5)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
