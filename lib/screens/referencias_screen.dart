@@ -14,9 +14,9 @@ class ReferenciasScreen extends StatelessWidget {
       length: 2,
       initialIndex: initialTab,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Referencias'),
-          bottom: const TabBar(
+       appBar: AppBar(
+          title: const SizedBox.shrink(),
+          bottom: const TabBar( 
             tabs: [
               Tab(
                 child: Text(
