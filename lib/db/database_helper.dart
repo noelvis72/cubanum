@@ -9,10 +9,11 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbNombre = 'cubanum.db';
-  static const int _dbVersion = 3;
+  static const int _dbVersion = 4;
   static const String tablaMonedas = 'monedas';
   static const String tablaPaises = 'paises_personalizados';
   static const String tablaMetales = 'metales_personalizados';
+  static const String tablaCantos = 'cantos_personalizados';
 
   Database? _db;
 
@@ -95,6 +96,13 @@ class DatabaseHelper {
       )
     ''');
 
+    await db.execute('''
+      CREATE TABLE $tablaCantos (
+        id     INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE
+      )
+    ''');
+
     await db.execute('CREATE INDEX idx_monedas_pais ON $tablaMonedas(pais)');
     await db.execute('CREATE INDEX idx_monedas_denominacion ON $tablaMonedas(denominacion)');
     await db.execute('CREATE INDEX idx_monedas_anio ON $tablaMonedas(anio)');
@@ -102,9 +110,7 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // v1 -> v2: nuevos campos y tablas de listas personalizadas.
-    // Nota: proveedor y etiquetas se dejan físicamente en la tabla (SQLite
-    // antiguo no permite DROP COLUMN) pero ya no se usan desde el modelo.
+    // v1 -> v2
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN conmemorativa INTEGER NOT NULL DEFAULT 0');
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN fao INTEGER NOT NULL DEFAULT 0');
@@ -126,11 +132,23 @@ class DatabaseHelper {
         )
       ''');
     }
-  
+
+    // v2 -> v3
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN moneda_venta TEXT NOT NULL DEFAULT "CUP"');
     }
+
+    // v3 -> v4
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tablaCantos (
+          id     INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL UNIQUE
+        )
+      ''');
+    }
   }
+
   // ---------------- Monedas ----------------
 
   Future<int> insertar(Moneda moneda) async {
@@ -178,14 +196,13 @@ class DatabaseHelper {
     return Moneda.fromMap(rows.first);
   }
 
-    Future<List<Moneda>> buscar(String query) async {
+  Future<List<Moneda>> buscar(String query) async {
     final q = query.trim();
     if (q.isEmpty) return obtenerTodas();
     final db = await database;
     final like = '%$q%';
     final qLower = q.toLowerCase();
 
-    // Condiciones booleanas por palabra clave
     final quiereConmemorativa = qLower == 'conmemorativa' ||
         qLower == 'conmemorativas' ||
         qLower == 'conmemorativo';
@@ -211,12 +228,8 @@ class DatabaseHelper {
       like, like, like, like,
     ];
 
-    if (quiereConmemorativa) {
-      condiciones.add('conmemorativa = 1');
-    }
-    if (quiereFao) {
-      condiciones.add('fao = 1');
-    }
+    if (quiereConmemorativa) condiciones.add('conmemorativa = 1');
+    if (quiereFao) condiciones.add('fao = 1');
 
     final rows = await db.query(
       tablaMonedas,
@@ -253,10 +266,7 @@ class DatabaseHelper {
 
   Future<List<String>> obtenerPaisesPersonalizados() async {
     final db = await database;
-    final rows = await db.query(
-      tablaPaises,
-      orderBy: 'nombre COLLATE NOCASE ASC',
-    );
+    final rows = await db.query(tablaPaises, orderBy: 'nombre COLLATE NOCASE ASC');
     return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
   }
 
@@ -280,16 +290,37 @@ class DatabaseHelper {
 
   Future<List<String>> obtenerMetalesPersonalizados() async {
     final db = await database;
-    final rows = await db.query(
-      tablaMetales,
-      orderBy: 'nombre COLLATE NOCASE ASC',
-    );
+    final rows = await db.query(tablaMetales, orderBy: 'nombre COLLATE NOCASE ASC');
     return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
   }
 
   Future<int> eliminarMetalPersonalizado(String nombre) async {
     final db = await database;
     return db.delete(tablaMetales, where: 'nombre = ?', whereArgs: [nombre]);
+  }
+
+  // ---------------- Cantos personalizados ----------------
+
+  Future<int> insertarCantoPersonalizado(String nombre) async {
+    final db = await database;
+    final n = nombre.trim();
+    if (n.isEmpty) return -1;
+    return db.insert(
+      tablaCantos,
+      {'nombre': n},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  Future<List<String>> obtenerCantosPersonalizados() async {
+    final db = await database;
+    final rows = await db.query(tablaCantos, orderBy: 'nombre COLLATE NOCASE ASC');
+    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+  }
+
+  Future<int> eliminarCantoPersonalizado(String nombre) async {
+    final db = await database;
+    return db.delete(tablaCantos, where: 'nombre = ?', whereArgs: [nombre]);
   }
 
   // ---------------- Utilidades ----------------
