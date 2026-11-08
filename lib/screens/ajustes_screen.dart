@@ -25,6 +25,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   bool _exportando = false;
   List<String> _paisesPersonalizados = [];
   List<String> _metalesPersonalizados = [];
+  List<String> _cantosPersonalizados = [];
   bool _cargandoListas = true;
 
   @override
@@ -44,15 +45,17 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   Future<void> _cargarListasPersonalizadas() async {
-    final paises = await _db.obtenerPaisesPersonalizados();
-    final metales = await _db.obtenerMetalesPersonalizados();
-    if (!mounted) return;
-    setState(() {
-      _paisesPersonalizados = paises;
-      _metalesPersonalizados = metales;
-      _cargandoListas = false;
-    });
-  }
+       final paises = await _db.obtenerPaisesPersonalizados();
+      final metales = await _db.obtenerMetalesPersonalizados();
+      final cantos = await _db.obtenerCantosPersonalizados();
+        if (!mounted) return;
+     setState(() {
+         _paisesPersonalizados = paises;
+         _metalesPersonalizados = metales;
+         _cantosPersonalizados = cantos;
+         _cargandoListas = false;
+  });
+}
 
   Future<void> _exportarPdf() async {
     if (_exportando) return;
@@ -163,7 +166,10 @@ class _AjustesScreenState extends State<AjustesScreen> {
     await _db.eliminarMetalPersonalizado(nombre);
     await _cargarListasPersonalizadas();
   }
-
+  Future<void> _eliminarCanto(String nombre) async {
+    await _db.eliminarCantoPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -318,6 +324,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
                   icono: Icons.bolt_outlined,
                   items: _metalesPersonalizados,
                   onEliminar: _eliminarMetal,
+                ),
+                _SubLista(
+                  titulo: 'Cantos',
+                  icono: Icons.line_weight,
+                  items: _cantosPersonalizados,
+                  onEliminar: _eliminarCanto,
                 ),
               ],
             ],
