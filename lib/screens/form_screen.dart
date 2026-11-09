@@ -25,13 +25,11 @@ class _FormScreenState extends State<FormScreen> {
   final _picker = ImagePicker();
   final _db = DatabaseHelper.instance;
 
-  late final TextEditingController _paisCtrl;
   late final TextEditingController _periodoCtrl;
   late final TextEditingController _denominacionCtrl;
   late final TextEditingController _anioCtrl;
   late final TextEditingController _cecaCtrl;
   late final TextEditingController _kmCtrl;
-  late final TextEditingController _metalCtrl;
   late final TextEditingController _acunadasCtrl;
   late final TextEditingController _pesoCtrl;
   late final TextEditingController _diametroCtrl;
@@ -48,6 +46,7 @@ class _FormScreenState extends State<FormScreen> {
   bool _perteneceOnu = false;
   bool _conmemorativa = false;
   bool _fao = false;
+  bool _esHejira = false;
   String? _paisSeleccionado;
   String? _formaSeleccionada;
   String? _metalSeleccionado;
@@ -158,23 +157,21 @@ class _FormScreenState extends State<FormScreen> {
   final List<TextInputFormatter> _numFormatters = [
     FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
   ];
-
-  final List<TextInputFormatter> _intFormatters = [
+  final List<TextInputFormatter> _intFormatters = [FilteringTextInputFormatter.digitsOnly];
+  final List<TextInputFormatter> _anioFormatters = [
     FilteringTextInputFormatter.digitsOnly,
+    LengthLimitingTextInputFormatter(4),
   ];
 
   @override
   void initState() {
     super.initState();
     final m = widget.moneda;
-
-    _paisCtrl          = TextEditingController();
     _periodoCtrl       = TextEditingController(text: m?.periodoAcunacion ?? '');
     _denominacionCtrl  = TextEditingController(text: m?.denominacion ?? '');
     _anioCtrl          = TextEditingController(text: m?.anio ?? '');
     _cecaCtrl          = TextEditingController(text: m?.ceca ?? '');
     _kmCtrl            = TextEditingController(text: m?.kmCatalogo ?? '');
-    _metalCtrl         = TextEditingController();
     _acunadasCtrl      = TextEditingController(text: m?.acunadas?.toString() ?? '');
     _pesoCtrl          = TextEditingController(text: _numATexto(m?.pesoG));
     _diametroCtrl      = TextEditingController(text: _numATexto(m?.diametroMm));
@@ -191,6 +188,7 @@ class _FormScreenState extends State<FormScreen> {
     _perteneceOnu  = m?.perteneceOnu ?? false;
     _conmemorativa = m?.conmemorativa ?? false;
     _fao           = m?.fao ?? false;
+    _esHejira      = m?.esHejira ?? false;
     _autenticidad  = (m != null && m.autenticidad.isNotEmpty) ? m.autenticidad : 'Original';
     _monedaPrecio  = (m != null && m.monedaPrecio.isNotEmpty) ? m.monedaPrecio : 'CUP';
     _valorEstimadoMoneda = (m != null && m.valorEstimadoMoneda.isNotEmpty) ? m.valorEstimadoMoneda : 'CUP';
@@ -238,8 +236,8 @@ class _FormScreenState extends State<FormScreen> {
   @override
   void dispose() {
     for (final c in [
-      _paisCtrl, _periodoCtrl, _denominacionCtrl, _anioCtrl, _cecaCtrl,
-      _kmCtrl, _metalCtrl, _acunadasCtrl, _pesoCtrl, _diametroCtrl, _grosorCtrl,
+      _periodoCtrl, _denominacionCtrl, _anioCtrl, _cecaCtrl,
+      _kmCtrl, _acunadasCtrl, _pesoCtrl, _diametroCtrl, _grosorCtrl,
       _leyCtrl, _detallesCtrl, _precioCompraCtrl,
       _lugarCompraCtrl, _valorEstimadoCtrl,
       _precioVentaCtrl, _ubicacionCtrl, _notasCtrl,
@@ -282,10 +280,7 @@ class _FormScreenState extends State<FormScreen> {
     return f;
   }
 
-  Future<String?> _pedirTextoNuevo({
-    required String titulo,
-    required String hint,
-  }) async {
+  Future<String?> _pedirTextoNuevo({required String titulo, required String hint}) async {
     final ctrl = TextEditingController();
     final resultado = await showDialog<String>(
       context: context,
@@ -297,10 +292,7 @@ class _FormScreenState extends State<FormScreen> {
           decoration: InputDecoration(hintText: hint),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           TextButton(
             onPressed: () {
               final v = ctrl.text.trim();
@@ -316,10 +308,7 @@ class _FormScreenState extends State<FormScreen> {
   }
 
   Future<void> _agregarPaisPersonalizado() async {
-    final nombre = await _pedirTextoNuevo(
-      titulo: 'Añadir país o territorio',
-      hint: 'Ej: Cuba colonial',
-    );
+    final nombre = await _pedirTextoNuevo(titulo: 'Añadir país o territorio', hint: 'Ej: Cuba colonial');
     if (nombre == null || !mounted) return;
     await _db.insertarPaisPersonalizado(nombre);
     await _cargarListasPersonalizadas();
@@ -328,10 +317,7 @@ class _FormScreenState extends State<FormScreen> {
   }
 
   Future<void> _agregarMetalPersonalizado() async {
-    final nombre = await _pedirTextoNuevo(
-      titulo: 'Añadir metal o aleación',
-      hint: 'Ej: Cuproníquel dorado',
-    );
+    final nombre = await _pedirTextoNuevo(titulo: 'Añadir metal o aleación', hint: 'Ej: Cuproníquel dorado');
     if (nombre == null || !mounted) return;
     await _db.insertarMetalPersonalizado(nombre);
     await _cargarListasPersonalizadas();
@@ -340,10 +326,7 @@ class _FormScreenState extends State<FormScreen> {
   }
 
   Future<void> _agregarCantoPersonalizado() async {
-    final nombre = await _pedirTextoNuevo(
-      titulo: 'Añadir canto',
-      hint: 'Ej: Canto con inscripción',
-    );
+    final nombre = await _pedirTextoNuevo(titulo: 'Añadir canto', hint: 'Ej: Canto con inscripción');
     if (nombre == null || !mounted) return;
     await _db.insertarCantoPersonalizado(nombre);
     await _cargarListasPersonalizadas();
@@ -428,6 +411,20 @@ class _FormScreenState extends State<FormScreen> {
       return;
     }
 
+    // Validación de fotos obligatorias
+    if (_fotoAnverso == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes añadir la foto del anverso.')),
+      );
+      return;
+    }
+    if (_fotoReverso == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes añadir la foto del reverso.')),
+      );
+      return;
+    }
+
     setState(() => _guardando = true);
 
     final pesoVal      = _parseNum(_pesoCtrl.text);
@@ -448,6 +445,7 @@ class _FormScreenState extends State<FormScreen> {
       periodoAcunacion: _periodoCtrl.text.trim(),
       denominacion: _denominacionCtrl.text.trim(),
       anio: _anioCtrl.text.trim(),
+      esHejira: _esHejira,
       ceca: _cecaCtrl.text.trim(),
       kmCatalogo: _kmCtrl.text.trim(),
       acunadas: acunadasVal,
@@ -561,7 +559,6 @@ class _FormScreenState extends State<FormScreen> {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
           child: Column(
             children: [
-              // ---------------- Identificación ----------------
               _BloqueFormulario(
                 titulo: 'Identificación',
                 icono: Icons.badge_outlined,
@@ -586,10 +583,43 @@ class _FormScreenState extends State<FormScreen> {
                     etiqueta: 'Período de acuñación',
                     icono: Icons.history_edu_outlined,
                   ),
-                  _TextoForm(
-                    controller: _anioCtrl,
-                    etiqueta: 'Año (admite rangos: 1902-1915, c. 1890)',
-                    icono: Icons.calendar_today_outlined,
+                  // Año + checkbox AH
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _TextoForm(
+                          controller: _anioCtrl,
+                          etiqueta: 'Año *',
+                          icono: Icons.calendar_today_outlined,
+                          tipoTeclado: const TextInputType.numberWithOptions(decimal: false),
+                          formatters: _anioFormatters,
+                          validadorObligatorio: true,
+                          validadorExtra: (v) {
+                            if (v == null || v.trim().isEmpty) return null;
+                            final n = int.tryParse(v.trim());
+                            if (n == null) return 'Solo números';
+                            if (n < 1 || n > 9999) return 'Año entre 1 y 9999';
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: Text('AH (Hégira)', style: theme.textTheme.bodySmall),
+                            value: _esHejira,
+                            onChanged: (v) => setState(() => _esHejira = v ?? false),
+                            controlAffinity: ListTileControlAffinity.leading,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   _TextoForm(
                     controller: _cecaCtrl,
@@ -631,8 +661,6 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
-
-              // ---------------- Características físicas ----------------
               _BloqueFormulario(
                 titulo: 'Características físicas',
                 icono: Icons.straighten,
@@ -699,8 +727,6 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
-
-              // ---------------- Conservación y autenticidad ----------------
               _BloqueFormulario(
                 titulo: 'Conservación y autenticidad',
                 icono: Icons.verified_outlined,
@@ -708,9 +734,7 @@ class _FormScreenState extends State<FormScreen> {
                   FormField<String>(
                     initialValue: _gradoSheldon,
                     validator: (v) {
-                      if (v == null || v.isEmpty) {
-                        return 'Selecciona un grado Sheldon';
-                      }
+                      if (v == null || v.isEmpty) return 'Selecciona un grado Sheldon';
                       return null;
                     },
                     builder: (state) {
@@ -753,8 +777,6 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
-
-              // ---------------- Adquisición y valoración ----------------
               _BloqueFormulario(
                 titulo: 'Adquisición y valoración',
                 icono: Icons.shopping_bag_outlined,
@@ -831,21 +853,19 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
-
-              // ---------------- Multimedia ----------------
               _BloqueFormulario(
                 titulo: 'Multimedia',
                 icono: Icons.photo_camera_outlined,
                 hijos: [
                   _SelectorImagen(
-                    etiqueta: 'Anverso',
+                    etiqueta: 'Anverso *',
                     ruta: _fotoAnverso,
                     onGaleria: () => _seleccionarFoto('anverso'),
                     onCamara: () => _tomarFotoConCamara('anverso'),
                     onQuitar: _fotoAnverso == null ? null : () => _quitarFoto('anverso'),
                   ),
                   _SelectorImagen(
-                    etiqueta: 'Reverso',
+                    etiqueta: 'Reverso *',
                     ruta: _fotoReverso,
                     onGaleria: () => _seleccionarFoto('reverso'),
                     onCamara: () => _tomarFotoConCamara('reverso'),
@@ -867,8 +887,6 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
-
-              // ---------------- Ubicación y notas ----------------
               _BloqueFormulario(
                 titulo: 'Ubicación y notas',
                 icono: Icons.inventory_2_outlined,
@@ -902,11 +920,7 @@ class _BloqueFormulario extends StatelessWidget {
   final String titulo;
   final IconData icono;
   final List<Widget> hijos;
-  const _BloqueFormulario({
-    required this.titulo,
-    required this.icono,
-    required this.hijos,
-  });
+  const _BloqueFormulario({required this.titulo, required this.icono, required this.hijos});
 
   @override
   Widget build(BuildContext context) {
@@ -942,6 +956,7 @@ class _TextoForm extends StatelessWidget {
   final TextInputType? tipoTeclado;
   final List<TextInputFormatter>? formatters;
   final bool validadorObligatorio;
+  final String? Function(String?)? validadorExtra;
 
   const _TextoForm({
     required this.controller,
@@ -951,6 +966,7 @@ class _TextoForm extends StatelessWidget {
     this.tipoTeclado,
     this.formatters,
     this.validadorObligatorio = false,
+    this.validadorExtra,
   });
 
   @override
@@ -969,8 +985,12 @@ class _TextoForm extends StatelessWidget {
           alignLabelWithHint: maxLineas > 1,
         ),
         validator: (v) {
-          if (!validadorObligatorio) return null;
-          if (v == null || v.trim().isEmpty) return 'Campo obligatorio';
+          if (validadorObligatorio) {
+            if (v == null || v.trim().isEmpty) return 'Campo obligatorio';
+          }
+          if (validadorExtra != null) {
+            return validadorExtra!(v);
+          }
           return null;
         },
       ),
