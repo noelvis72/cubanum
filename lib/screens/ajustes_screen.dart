@@ -9,6 +9,7 @@ import '../services/export_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
 import 'referencias_screen.dart';
+import '../services/backup_service.dart';
 
 class AjustesScreen extends StatefulWidget {
   const AjustesScreen({super.key});
@@ -23,6 +24,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   int? _totalMonedas;
   bool _cargandoTotal = true;
   bool _exportando = false;
+  bool _creandoBackup = false;
   List<String> _paisesPersonalizados = [];
   List<String> _metalesPersonalizados = [];
   List<String> _cantosPersonalizados = [];
@@ -122,6 +124,86 @@ class _AjustesScreenState extends State<AjustesScreen> {
     }
   }
 
+    Future<void> _crearBackup() async {
+    if (_creandoBackup) return;
+    setState(() => _creandoBackup = true);
+    try {
+      final archivo = await BackupService.crearBackup();
+      if (!mounted) return;
+      if (archivo != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copia creada: ${p.basename(archivo.path)}')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo crear la copia de seguridad')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _creandoBackup = false);
+    }
+  }
+
+  Future<void> _restaurarBackup() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restaurar copia de seguridad'),
+        content: const Text(
+          'Esto REEMPLAZARÁ todas las monedas y fotos actuales por las de '
+          'la copia de seguridad.\n\n'
+          'Se guardará una copia automática de la colección actual por si '
+          'algo falla.\n\n'
+          '¿Continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Restaurar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmado != true || !mounted) return;
+
+    setState(() => _creandoBackup = true);
+    try {
+      final ok = await BackupService.restaurarBackup();
+      if (!mounted) return;
+      await _cargarTotal();
+      if (!mounted) return;
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Copia restaurada correctamente')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo restaurar la copia')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _creandoBackup = false);
+    }
+  }
+  
   Future<void> _confirmarBorrado() async {
     final confirmado = await showDialog<bool>(
       context: context,
@@ -264,6 +346,42 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ],
           ),
 
+                    // ---------------- Copia de seguridad ----------------
+          _SeccionAjustes(
+            titulo: 'Copia de seguridad',
+            icono: Icons.settings_backup_restore,
+            hijos: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                enabled: !_creandoBackup,
+                leading: const Icon(Icons.save_alt),
+                title: const Text('Crear copia de seguridad'),
+                subtitle: const Text('Guarda la colección y las fotos en un ZIP'),
+                trailing: _creandoBackup
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.chevron_right),
+                onTap: _creandoBackup ? null : _crearBackup,
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                enabled: !_creandoBackup,
+                leading: const Icon(Icons.restore),
+                title: const Text('Restaurar copia de seguridad'),
+                subtitle: const Text('Reemplaza la colección actual por una copia'),
+                trailing: _creandoBackup
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.chevron_right),
+                onTap: _creandoBackup ? null : _restaurarBackup,
+              ),
+            ],
+          ),
+          
           // ---------------- Herramientas numismáticas ----------------
           _SeccionAjustes(
             titulo: 'Herramientas numismáticas',
