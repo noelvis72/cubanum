@@ -161,22 +161,29 @@ class _DetalleScreenState extends State<DetalleScreen> {
             const SizedBox(height: 16),
             _Encabezado(moneda: m),
             const SizedBox(height: 12),
-            _BloqueDetalle(
-              titulo: 'Identificación',
-              icono: Icons.badge_outlined,
-              filas: [
-                _FilaDato('País', m.pais),
-                _FilaDato('Denominación', m.denominacion),
-                _FilaDato('Período', m.periodoAcunacion),
-                _FilaDato('Año', m.anio),
-                _FilaDato('Ceca', m.ceca),
-                _FilaDato('KM#', m.kmCatalogo),
-                _FilaDato('Acuñadas', m.acunadas?.toString()),
-                _FilaDato('Pertenece a la ONU', m.perteneceOnu ? 'Sí' : 'No'),
-                _FilaDato('Conmemorativa', m.conmemorativa ? 'Sí' : 'No'),
-                _FilaDato('FAO', m.fao ? 'Sí' : 'No'),
-              ],
-            ),
+            // ---------------- Identificación ----------------
+_BloqueDetalle(
+  titulo: 'Identificación',
+  icono: Icons.badge_outlined,
+  filas: [
+    _FilaDato('País', m.pais),
+    _FilaDato('Denominación', m.denominacion),
+    _FilaDato('Período', m.periodoAcunacion),
+    _FilaDato(
+      'Año',
+      m.anio.isEmpty
+          ? ''
+          : (m.esHejira ? '${m.anio} AH' : m.anio),
+    ),
+    _FilaDato('Ceca', m.ceca),
+    _FilaDato('KM#', m.kmCatalogo),
+    _FilaDato('Acuñadas', m.acunadas?.toString()),
+    _FilaDato('Pertenece a la ONU', m.perteneceOnu ? 'Sí' : 'No'),
+    _FilaDato('Conmemorativa', m.conmemorativa ? 'Sí' : 'No'),
+    _FilaDato('FAO', m.fao ? 'Sí' : 'No'),
+    _FilaDato('Hégira', m.esHejira ? 'Sí' : 'No'),
+  ],
+),
             _BloqueDetalle(
              titulo: 'Características físicas',
              icono: Icons.straighten,
