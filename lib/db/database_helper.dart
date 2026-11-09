@@ -35,6 +35,12 @@ class DatabaseHelper {
     );
   }
 
+    /// Devuelve la ruta completa del archivo de base de datos.
+  Future<String> rutaDb() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return p.join(dir.path, _dbNombre);
+  }
+  
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
   }
