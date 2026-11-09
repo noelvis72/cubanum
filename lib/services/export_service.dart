@@ -215,7 +215,8 @@ class ExportService {
     addFila('País', m.pais);
     addFila('Denominación', m.denominacion);
     addFila('Período', m.periodoAcunacion);
-    addFila('Año', m.anio);
+    addFila('Año', m.anio.isEmpty ? '' : (m.esHejira ? '${m.anio} AH' : m.anio));
+    addFila('Hégira', m.esHejira ? 'Sí' : 'No');
     addFila('Ceca', m.ceca);
     addFila('KM#', m.kmCatalogo);
     addFila('Metal', m.metal);
@@ -343,7 +344,8 @@ class ExportService {
       ('Pertenece ONU', (m) => m.perteneceOnu ? 'Sí' : 'No', 'text'),
       ('Período', (m) => m.periodoAcunacion, 'text'),
       ('Denominación', (m) => m.denominacion, 'text'),
-      ('Año', (m) => m.anio, 'text'),
+      ('Año', (m) => m.anio.isEmpty ? '' : (m.esHejira ? '${m.anio} AH' : m.anio), 'text'),
+      ('Hégira', (m) => m.esHejira ? 'Sí' : 'No', 'text'),
       ('Ceca', (m) => m.ceca, 'text'),
       ('KM#', (m) => m.kmCatalogo, 'text'),
       ('Metal', (m) => m.metal, 'text'),
