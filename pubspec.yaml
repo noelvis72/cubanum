@@ -17,6 +17,8 @@ dependencies:
   misri_hijri: ^0.1.7
   hijri_plus: ^0.1.0
   flutter_expandable_table: ^2.0.1
+  archive: ^3.6.1
+  file_picker: ^8.1.2
   
   # Almacenamiento local
   sqflite: ^2.3.3
