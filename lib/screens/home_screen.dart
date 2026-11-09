@@ -1,17 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 
 import '../db/database_helper.dart';
 import '../models/moneda.dart';
-import '../widgets/moneda_card.dart';
 import '../services/backup_service.dart';
+import '../widgets/moneda_card.dart';
 import 'ajustes_screen.dart';
 import 'detalle_screen.dart';
-import 'form_screen.dart';
 import 'estadisticas_screen.dart';
+import 'form_screen.dart';
 import 'referencias_screen.dart';
-import 'package:path/path.dart' as p;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,8 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _busquedaFocus.addListener(_onFocusCambia);
     _cargarMonedas();
-     WidgetsBinding.instance.addPostFrameCallback((_) {
-    _comprobarRecordatorioSalva();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _comprobarRecordatorioSalva();
     });
   }
 
@@ -71,7 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _overlayAyuda = OverlayEntry(
       builder: (ctx) => Positioned(
-        // Posición más abajo (justo debajo del campo, con margen).
         top: offset.dy + kToolbarHeight + 80,
         left: 16,
         right: 16,
@@ -91,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Text(
               'Puedes buscar por país, metal, año, grado Sheldon, '
-              'conmemorativas o FAO.',
+              'conmemorativas, FAO o Hégira (AH).',
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ),
@@ -100,7 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     overlay.insert(_overlayAyuda!);
 
-    // Auto-ocultar tras 7 segundos.
     _overlayTimer?.cancel();
     _overlayTimer = Timer(const Duration(seconds: 7), () {
       _quitarOverlay();
@@ -137,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirFormulario() async {
-      _busquedaFocus.unfocus();
+    _busquedaFocus.unfocus();
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const FormScreen()),
@@ -146,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirDetalle(Moneda moneda) async {
-      _busquedaFocus.unfocus();
+    _busquedaFocus.unfocus();
     if (moneda.id == null) return;
     final resultado = await Navigator.push(
       context,
@@ -156,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirAjustes() async {
-      _busquedaFocus.unfocus();
+    _busquedaFocus.unfocus();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AjustesScreen()),
@@ -165,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirReferencias() async {
-      _busquedaFocus.unfocus();
+    _busquedaFocus.unfocus();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ReferenciasScreen()),
@@ -173,14 +171,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirEstadisticas() async {
-      _busquedaFocus.unfocus();
+    _busquedaFocus.unfocus();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
     );
   }
 
-    Future<void> _abrirDialogoBackup() async {
+  Future<void> _abrirDialogoBackup() async {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -273,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-    Future<void> _comprobarRecordatorioSalva() async {
+  Future<void> _comprobarRecordatorioSalva() async {
     final debe = await BackupService.debeRecordarSalva();
     if (!debe || !mounted) return;
     showDialog<void>(
@@ -301,86 +299,109 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
-  @override
-Widget build(BuildContext context) {
-  final theme = Theme.of(context);
 
-  return GestureDetector(
-    onTap: () => FocusScope.of(context).unfocus(),
-    child: Scaffold(
-      appBar: AppBar(
-        title: const _TituloCubanum(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_backup_restore),
-            tooltip: 'Copia de seguridad',
-            onPressed: _abrirDialogoBackup,
-          ),
-          IconButton(
-            icon: const Icon(Icons.menu_book_outlined),
-            tooltip: 'Referencias',
-            onPressed: _abrirReferencias,
-          ),
-          IconButton(
-            icon: const Icon(Icons.bar_chart_outlined),
-            tooltip: 'Estadísticas',
-            onPressed: _abrirEstadisticas,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Ajustes',
-            onPressed: _abrirAjustes,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _abrirFormulario,
-        tooltip: 'Añadir moneda',
-        child: const Icon(Icons.add),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: TextField(
-              controller: _busquedaCtrl,
-              focusNode: _busquedaFocus,
-              onChanged: _onBusquedaCambiada,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: _busquedaFocus.hasFocus
-                    ? 'País, metal, año, Sheldon, FAO…'
-                    : 'Buscar en la colección…',
-                prefixIcon: Icon(Icons.search,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _busquedaCtrl,
-                  builder: (context, value, _) {
-                    if (value.text.isEmpty) return const SizedBox.shrink();
-                    return IconButton(
-                      icon: const Icon(Icons.clear),
-                      tooltip: 'Borrar',
-                      onPressed: () {
-                        _busquedaCtrl.clear();
-                        _onBusquedaCambiada('');
-                      },
-                    );
-                  },
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const _TituloCubanum(),
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.settings_backup_restore,
+                color: const Color(0xFFCF142B),
+                shadows: const [
+                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+                ],
+              ),
+              tooltip: 'Copia de seguridad',
+              onPressed: _abrirDialogoBackup,
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.menu_book_outlined,
+                color: theme.colorScheme.primary,
+                shadows: const [
+                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+                ],
+              ),
+              tooltip: 'Referencias',
+              onPressed: _abrirReferencias,
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.bar_chart_outlined,
+                color: theme.colorScheme.primary,
+                shadows: const [
+                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+                ],
+              ),
+              tooltip: 'Estadísticas',
+              onPressed: _abrirEstadisticas,
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.settings_outlined,
+                color: theme.colorScheme.primary,
+                shadows: const [
+                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+                ],
+              ),
+              tooltip: 'Ajustes',
+              onPressed: _abrirAjustes,
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _abrirFormulario,
+          tooltip: 'Añadir moneda',
+          child: const Icon(Icons.add),
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: TextField(
+                controller: _busquedaCtrl,
+                focusNode: _busquedaFocus,
+                onChanged: _onBusquedaCambiada,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: _busquedaFocus.hasFocus
+                      ? 'País, metal, año, Sheldon, FAO, AH…'
+                      : 'Buscar en la colección…',
+                  prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _busquedaCtrl,
+                    builder: (context, value, _) {
+                      if (value.text.isEmpty) return const SizedBox.shrink();
+                      return IconButton(
+                        icon: const Icon(Icons.clear),
+                        tooltip: 'Borrar',
+                        onPressed: () {
+                          _busquedaCtrl.clear();
+                          _onBusquedaCambiada('');
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: _cargando
-                ? const Center(child: CircularProgressIndicator())
-                : _buildLista(),
-          ),
-        ],
+            Expanded(
+              child: _cargando
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildLista(),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildLista() {
     if (_monedas.isEmpty) {
@@ -404,72 +425,68 @@ Widget build(BuildContext context) {
   }
 }
 
-/// Título CUBANUM con ShaderMask (gradiente azul-blanco-rojo) y estrella blanca
-/// superpuesta en el centro.
+/// Título CUBANUM con fondo oscuro redondeado, ShaderMask y estrella.
 class _TituloCubanum extends StatelessWidget {
   const _TituloCubanum();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final baseStyle = (theme.appBarTheme.titleTextStyle ??
-            theme.textTheme.titleLarge?.copyWith(letterSpacing: 1.2))
-        ?.copyWith(
+    final baseStyle = const TextStyle(
       fontWeight: FontWeight.w900,
       letterSpacing: 2.0,
       fontSize: 22,
     );
 
-    return SizedBox(
-      height: kToolbarHeight,
-      child: Stack(
-        alignment: Alignment.centerLeft,
-        children: [
-          // Sombra negra de contorno
-          Text(
-            'CUBANUM',
-            style: baseStyle?.copyWith(
-              color: Colors.black,
-              shadows: const [
-                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, 1)),
-                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(-1, 1)),
-                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, -1)),
-                Shadow(color: Colors.black, blurRadius: 2, offset: Offset(-1, -1)),
-              ],
-            ),
-          ),
-          // Texto con gradiente intenso
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF001C66),
-                Color(0xFF002A8F),
-                Color(0xFFFFFFFF),
-                Color(0xFFE00019),
-                Color(0xFF9B0011),
-              ],
-              stops: [0.0, 0.2, 0.5, 0.8, 1.0],
-            ).createShader(bounds),
-            child: Text(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E222B),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: SizedBox(
+        height: 32,
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            Text(
               'CUBANUM',
-              style: baseStyle?.copyWith(color: Colors.white),
-            ),
-          ),
-          // Estrella blanca en el hueco central de la C
-          Positioned(
-            left: 6,
-            top: (kToolbarHeight - 8) / 2 - 2,
-            child: const IgnorePointer(
-              child: Icon(
-                Icons.star,
-                size: 8,
-                color: Colors.white,
+              style: baseStyle.copyWith(
+                color: Colors.black,
+                shadows: const [
+                  Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, 1)),
+                  Shadow(color: Colors.black, blurRadius: 2, offset: Offset(-1, 1)),
+                  Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, -1)),
+                  Shadow(color: Colors.black, blurRadius: 2, offset: Offset(-1, -1)),
+                ],
               ),
             ),
-          ),
-        ],
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF001C66),
+                  Color(0xFF002A8F),
+                  Color(0xFFFFFFFF),
+                  Color(0xFFE00019),
+                  Color(0xFF9B0011),
+                ],
+                stops: [0.0, 0.2, 0.5, 0.8, 1.0],
+              ).createShader(bounds),
+              child: Text(
+                'CUBANUM',
+                style: baseStyle.copyWith(color: Colors.white),
+              ),
+            ),
+            Positioned(
+              left: 8,
+              top: (32 - 10) / 2 - 1,
+              child: const IgnorePointer(
+                child: Icon(Icons.star, size: 10, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
