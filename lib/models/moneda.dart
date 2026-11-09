@@ -7,11 +7,11 @@ class Moneda {
   final String periodoAcunacion;
   final String denominacion;
   final String anio;
+  final bool esHejira;
   final String ceca;
   final String kmCatalogo;
   final int? acunadas;
 
-  // Características físicas
   final double? pesoG;
   final double? diametroMm;
   final double? grosorMm;
@@ -21,12 +21,10 @@ class Moneda {
   final String canto;
   final String alineacion;
 
-  // Estado y autenticidad
   final String gradoSheldon;
   final String detallesVisibles;
   final String autenticidad;
 
-  // Adquisición y valoración
   final double? precioCompra;
   final String monedaPrecio;
   final String lugarCompra;
@@ -37,13 +35,11 @@ class Moneda {
   final String monedaVenta;
   final DateTime? fechaVenta;
 
-  // Multimedia
   final String? fotoAnverso;
   final String? fotoReverso;
   final String? fotoCanto;
   final String? fotoKm;
 
-  // Notas y organización
   final String notas;
   final String ubicacion;
 
@@ -56,6 +52,7 @@ class Moneda {
     required this.periodoAcunacion,
     required this.denominacion,
     required this.anio,
+    required this.esHejira,
     required this.ceca,
     required this.kmCatalogo,
     this.acunadas,
@@ -96,6 +93,7 @@ class Moneda {
         periodoAcunacion: '',
         denominacion: '',
         anio: '',
+        esHejira: false,
         ceca: '',
         kmCatalogo: '',
         acunadas: null,
@@ -138,6 +136,7 @@ class Moneda {
         'periodo_acunacion': periodoAcunacion,
         'denominacion': denominacion,
         'anio': anio,
+        'es_hejira': esHejira ? 1 : 0,
         'ceca': ceca,
         'km_catalogo': kmCatalogo,
         'acunadas': acunadas,
@@ -178,6 +177,7 @@ class Moneda {
         periodoAcunacion: (map['periodo_acunacion'] as String?) ?? '',
         denominacion: (map['denominacion'] as String?) ?? '',
         anio: (map['anio'] as String?) ?? '',
+        esHejira: (map['es_hejira'] as int? ?? 0) == 1,
         ceca: (map['ceca'] as String?) ?? '',
         kmCatalogo: (map['km_catalogo'] as String?) ?? '',
         acunadas: _aInt(map['acunadas']),
@@ -250,6 +250,7 @@ class Moneda {
     String? periodoAcunacion,
     String? denominacion,
     String? anio,
+    bool? esHejira,
     String? ceca,
     String? kmCatalogo,
     int? acunadas,
@@ -302,6 +303,7 @@ class Moneda {
       periodoAcunacion: periodoAcunacion ?? this.periodoAcunacion,
       denominacion: denominacion ?? this.denominacion,
       anio: anio ?? this.anio,
+      esHejira: esHejira ?? this.esHejira,
       ceca: ceca ?? this.ceca,
       kmCatalogo: kmCatalogo ?? this.kmCatalogo,
       acunadas: limpiarAcunadas ? null : (acunadas ?? this.acunadas),
@@ -337,5 +339,5 @@ class Moneda {
   @override
   String toString() =>
       'Moneda(id: $id, pais: $pais, denominacion: $denominacion, '
-      'anio: $anio, grado: $gradoSheldon)';
+      'anio: $anio, esHejira: $esHejira, grado: $gradoSheldon)';
 }
