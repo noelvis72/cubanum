@@ -9,7 +9,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbNombre = 'cubanum.db';
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 5;
   static const String tablaMonedas = 'monedas';
   static const String tablaPaises = 'paises_personalizados';
   static const String tablaMetales = 'metales_personalizados';
@@ -35,12 +35,6 @@ class DatabaseHelper {
     );
   }
 
-    /// Devuelve la ruta completa del archivo de base de datos.
-  Future<String> rutaDb() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return p.join(dir.path, _dbNombre);
-  }
-  
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
   }
@@ -56,6 +50,7 @@ class DatabaseHelper {
         periodo_acunacion      TEXT    NOT NULL DEFAULT '',
         denominacion           TEXT    NOT NULL DEFAULT '',
         anio                   TEXT    NOT NULL DEFAULT '',
+        es_hejira              INTEGER NOT NULL DEFAULT 0,
         ceca                   TEXT    NOT NULL DEFAULT '',
         km_catalogo            TEXT    NOT NULL DEFAULT '',
         acunadas               INTEGER,
@@ -116,7 +111,6 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // v1 -> v2
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN conmemorativa INTEGER NOT NULL DEFAULT 0');
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN fao INTEGER NOT NULL DEFAULT 0');
@@ -139,12 +133,10 @@ class DatabaseHelper {
       ''');
     }
 
-    // v2 -> v3
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN moneda_venta TEXT NOT NULL DEFAULT "CUP"');
     }
 
-    // v3 -> v4
     if (oldVersion < 4) {
       await db.execute('''
         CREATE TABLE IF NOT EXISTS $tablaCantos (
@@ -153,9 +145,11 @@ class DatabaseHelper {
         )
       ''');
     }
-  }
 
-  // ---------------- Monedas ----------------
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN es_hejira INTEGER NOT NULL DEFAULT 0');
+    }
+  }
 
   Future<int> insertar(Moneda moneda) async {
     final db = await database;
@@ -213,6 +207,12 @@ class DatabaseHelper {
         qLower == 'conmemorativas' ||
         qLower == 'conmemorativo';
     final quiereFao = qLower == 'fao';
+    final quiereAh = qLower == 'ah' ||
+        qLower == 'hegira' ||
+        qLower == 'hégira' ||
+        qLower == 'hejira' ||
+        qLower == 'islamica' ||
+        qLower == 'islámica';
 
     final condiciones = <String>[
       'pais           LIKE ?',
@@ -236,6 +236,7 @@ class DatabaseHelper {
 
     if (quiereConmemorativa) condiciones.add('conmemorativa = 1');
     if (quiereFao) condiciones.add('fao = 1');
+    if (quiereAh) condiciones.add('es_hejira = 1');
 
     final rows = await db.query(
       tablaMonedas,
@@ -257,79 +258,61 @@ class DatabaseHelper {
     await db.delete(tablaMonedas);
   }
 
-  // ---------------- Países personalizados ----------------
-
+  // Países personalizados
   Future<int> insertarPaisPersonalizado(String nombre) async {
     final db = await database;
     final n = nombre.trim();
     if (n.isEmpty) return -1;
-    return db.insert(
-      tablaPaises,
-      {'nombre': n},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    return db.insert(tablaPaises, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
-
   Future<List<String>> obtenerPaisesPersonalizados() async {
     final db = await database;
     final rows = await db.query(tablaPaises, orderBy: 'nombre COLLATE NOCASE ASC');
     return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
   }
-
   Future<int> eliminarPaisPersonalizado(String nombre) async {
     final db = await database;
     return db.delete(tablaPaises, where: 'nombre = ?', whereArgs: [nombre]);
   }
 
-  // ---------------- Metales personalizados ----------------
-
+  // Metales personalizados
   Future<int> insertarMetalPersonalizado(String nombre) async {
     final db = await database;
     final n = nombre.trim();
     if (n.isEmpty) return -1;
-    return db.insert(
-      tablaMetales,
-      {'nombre': n},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    return db.insert(tablaMetales, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
-
   Future<List<String>> obtenerMetalesPersonalizados() async {
     final db = await database;
     final rows = await db.query(tablaMetales, orderBy: 'nombre COLLATE NOCASE ASC');
     return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
   }
-
   Future<int> eliminarMetalPersonalizado(String nombre) async {
     final db = await database;
     return db.delete(tablaMetales, where: 'nombre = ?', whereArgs: [nombre]);
   }
 
-  // ---------------- Cantos personalizados ----------------
-
+  // Cantos personalizados
   Future<int> insertarCantoPersonalizado(String nombre) async {
     final db = await database;
     final n = nombre.trim();
     if (n.isEmpty) return -1;
-    return db.insert(
-      tablaCantos,
-      {'nombre': n},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    return db.insert(tablaCantos, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
-
   Future<List<String>> obtenerCantosPersonalizados() async {
     final db = await database;
     final rows = await db.query(tablaCantos, orderBy: 'nombre COLLATE NOCASE ASC');
     return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
   }
-
   Future<int> eliminarCantoPersonalizado(String nombre) async {
     final db = await database;
     return db.delete(tablaCantos, where: 'nombre = ?', whereArgs: [nombre]);
   }
 
-  // ---------------- Utilidades ----------------
+  Future<String> rutaDb() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return p.join(dir.path, _dbNombre);
+  }
 
   Future<void> cerrar() async {
     await _db?.close();
