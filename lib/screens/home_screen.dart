@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 import '../models/moneda.dart';
 import '../widgets/moneda_card.dart';
+import '../services/backup_service.dart';
 import 'ajustes_screen.dart';
 import 'detalle_screen.dart';
 import 'form_screen.dart';
 import 'estadisticas_screen.dart';
 import 'referencias_screen.dart';
+import 'package:path/path.dart' as p;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,6 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _busquedaFocus.addListener(_onFocusCambia);
     _cargarMonedas();
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+    _comprobarRecordatorioSalva();
+    });
   }
 
   @override
@@ -175,6 +180,128 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+    Future<void> _abrirDialogoBackup() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Copia de seguridad'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.save_alt),
+              title: const Text('Crear copia de seguridad'),
+              subtitle: const Text('Guarda la colección en un ZIP'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await _crearBackupDesdeHome();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.restore),
+              title: const Text('Restaurar copia de seguridad'),
+              subtitle: const Text('Reemplaza la colección actual'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await _restaurarBackupDesdeHome();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _crearBackupDesdeHome() async {
+    final archivo = await BackupService.crearBackup();
+    if (!mounted) return;
+    if (archivo != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Copia creada: ${p.basename(archivo.path)}')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo crear la copia')),
+      );
+    }
+  }
+
+  Future<void> _restaurarBackupDesdeHome() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restaurar copia de seguridad'),
+        content: const Text(
+          'Esto REEMPLAZARÁ todas las monedas y fotos actuales por las de '
+          'la copia de seguridad.\n\n'
+          'Se guardará una copia automática de la colección actual.\n\n'
+          '¿Continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Restaurar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) return;
+
+    final ok = await BackupService.restaurarBackup();
+    if (!mounted) return;
+    await _cargarMonedas();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Copia restaurada correctamente'
+            : 'No se pudo restaurar la copia'),
+      ),
+    );
+  }
+
+    Future<void> _comprobarRecordatorioSalva() async {
+    final debe = await BackupService.debeRecordarSalva();
+    if (!debe || !mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Recordatorio de copia de seguridad'),
+        content: const Text(
+          'Llevas más de 30 días sin hacer una copia de seguridad de tu '
+          'colección.\n\n'
+          '¿Quieres crear una ahora para no perder tus monedas?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Ahora no'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _crearBackupDesdeHome();
+            },
+            child: const Text('Crear copia'),
+          ),
+        ],
+      ),
+    );
+  }
+  
   @override
 Widget build(BuildContext context) {
   final theme = Theme.of(context);
@@ -185,6 +312,11 @@ Widget build(BuildContext context) {
       appBar: AppBar(
         title: const _TituloCubanum(),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_backup_restore),
+            tooltip: 'Copia de seguridad',
+            onPressed: _abrirDialogoBackup,
+          ),
           IconButton(
             icon: const Icon(Icons.menu_book_outlined),
             tooltip: 'Referencias',
