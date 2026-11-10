@@ -20,12 +20,12 @@ class BackupService {
   static const String _claveContador = 'cubanum_salva_contador';
   static const String _claveUltimaSalva = 'cubanum_ultima_salva';
 
-  /// Crea un ZIP con la BD y las fotos, y lo comparte con share_plus.
-  /// Devuelve el archivo creado (temporal) o null si falla.
-  static Future<File?> crearBackup() async {
+    /// Crea un ZIP con la BD y las fotos, y abre el diálogo nativo
+  /// "Guardar como" para que el usuario elija dónde guardarlo.
+  /// Devuelve true si el usuario guardó el archivo, false si canceló o falló.
+  static Future<bool> crearBackup() async {
     try {
       final dirDocs = await getApplicationDocumentsDirectory();
-      final dirTemp = await getTemporaryDirectory();
 
       final dbFile = File(p.join(dirDocs.path, 'cubanum.db'));
       final dirFotos = Directory(p.join(dirDocs.path, 'fotos'));
@@ -45,9 +45,8 @@ class BackupService {
           '${ahora.month.toString().padLeft(2, '0')}-'
           '${ahora.year}';
       final nombre = 'Cubanum_Salva_${fecha}_$contStr.zip';
-      final archivoZip = File(p.join(dirTemp.path, nombre));
 
-      // Construir el ZIP
+      // Construir el ZIP en memoria
       final archive = Archive();
 
       // Añadir la BD
@@ -70,25 +69,34 @@ class BackupService {
         }
       }
 
-      // Guardar el ZIP
+      // Codificar el ZIP a bytes
       final zipData = ZipEncoder().encode(archive);
       if (zipData == null) {
         throw Exception('Error al crear el ZIP.');
       }
-      await archivoZip.writeAsBytes(zipData, flush: true);
+
+      // Abrir el diálogo nativo "Guardar como"
+      final uri = await FilePicker.platform.saveFile(
+        dialogTitle: 'Guardar copia de seguridad de CUBANUM',
+        fileName: nombre,
+        bytes: Uint8List.fromList(zipData),
+        type: FileType.custom,
+        allowedExtensions: ['zip'],
+      );
+
+      // Si el usuario canceló, no se ha guardado
+      if (uri == null) {
+        // Revertir el contador porque no se completó la salva
+        await prefs.setInt(_claveContador, contador - 1);
+        return false;
+      }
 
       // Guardar la fecha de la última salva
       await prefs.setString(_claveUltimaSalva, ahora.toIso8601String());
 
-      // Compartir
-      await Share.shareXFiles(
-        [XFile(archivoZip.path)],
-        text: 'Copia de seguridad de CUBANUM',
-      );
-
-      return archivoZip;
+      return true;
     } catch (e) {
-      return null;
+      return false;
     }
   }
 
