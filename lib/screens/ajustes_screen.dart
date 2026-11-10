@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'estadisticas_screen.dart';
 
 import '../db/database_helper.dart';
 import '../services/export_service.dart';
@@ -383,7 +384,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           ),
           
           // ---------------- Herramientas numismáticas ----------------
-          _SeccionAjustes(
+                    _SeccionAjustes(
             titulo: 'Herramientas numismáticas',
             icono: Icons.menu_book_outlined,
             hijos: [
@@ -406,6 +407,19 @@ class _AjustesScreenState extends State<AjustesScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const ReferenciasScreen(initialTab: 0),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              // <-- NUEVA
+              _CardHerramienta(
+                titulo: 'Estadísticas\nde la colección',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EstadisticasScreen(),
                     ),
                   );
                 },
