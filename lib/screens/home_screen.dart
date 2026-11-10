@@ -413,8 +413,8 @@ class _TituloCubanum extends StatelessWidget {
   Widget build(BuildContext context) {
      final baseStyle = const TextStyle(
       fontWeight: FontWeight.w900,
-      letterSpacing: 1.2,
-      fontSize: 20,
+      letterSpacing: 2.0,
+      fontSize: 22,
     );
 
     return Container(
