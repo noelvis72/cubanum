@@ -583,12 +583,13 @@ class _FormScreenState extends State<FormScreen> {
                     etiqueta: 'Período de acuñación',
                     icono: Icons.history_edu_outlined,
                   ),
-                  // Año + checkbox AH
+                  
+              // Año + checkbox AH
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        flex: 2,
+                        flex: 3,
                         child: _TextoForm(
                           controller: _anioCtrl,
                           etiqueta: 'Año *',
@@ -607,16 +608,29 @@ class _FormScreenState extends State<FormScreen> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                            title: Text('AH (Hégira)', style: theme.textTheme.bodySmall),
-                            value: _esHejira,
-                            onChanged: (v) => setState(() => _esHejira = v ?? false),
-                            controlAffinity: ListTileControlAffinity.leading,
-                          ),
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, bottom: 2),
+                              child: Text(
+                                'AH (Hégira)',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 48,
+                              child: Checkbox(
+                                value: _esHejira,
+                                onChanged: (v) => setState(() => _esHejira = v ?? false),
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
