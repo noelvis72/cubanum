@@ -129,15 +129,15 @@ class _AjustesScreenState extends State<AjustesScreen> {
     if (_creandoBackup) return;
     setState(() => _creandoBackup = true);
     try {
-      final archivo = await BackupService.crearBackup();
+      final guardado = await BackupService.crearBackup();
       if (!mounted) return;
-      if (archivo != null) {
+      if (guardado) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Copia creada: ${p.basename(archivo.path)}')),
+          const SnackBar(content: Text('Copia de seguridad guardada')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo crear la copia de seguridad')),
+          const SnackBar(content: Text('Copia cancelada o no se pudo guardar')),
         );
       }
     } catch (e) {
