@@ -217,7 +217,7 @@ _BloqueDetalle(
                   _FilaDato('Fecha de compra', _fecha(m.fechaCompra!)),
                   _FilaDato('Lugar de compra', m.lugarCompra),
                 if (m.valorEstimado != null)
-                  _FilaDato('Valor estimado', _precio(m.valorEstimado!, m.monedaPrecio)),
+                  _FilaDato('Valor estimado', _precio(m.valorEstimado!, m.valorEstimadoMoneda)),
                 if (m.precioVenta != null)
                   _FilaDato('Precio de venta', _precio(m.precioVenta!, m.monedaVenta)),
                 if (m.fechaVenta != null)
