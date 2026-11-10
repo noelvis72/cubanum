@@ -312,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             IconButton(
               icon: Icon(
-                Icons.settings_backup_restore,
+                Icons.save,
                 color: const Color(0xFFCF142B),
                 shadows: const [
                   Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
@@ -431,14 +431,14 @@ class _TituloCubanum extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = const TextStyle(
+     final baseStyle = const TextStyle(
       fontWeight: FontWeight.w900,
-      letterSpacing: 2.0,
-      fontSize: 22,
+      letterSpacing: 1.2,
+      fontSize: 20,
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFF1E222B),
         borderRadius: BorderRadius.circular(8),
@@ -478,9 +478,9 @@ class _TituloCubanum extends StatelessWidget {
                 style: baseStyle.copyWith(color: Colors.white),
               ),
             ),
-            Positioned(
-              left: 8,
-              top: (32 - 10) / 2 - 1,
+           Positioned(
+              left: 7,
+              top: (32 - 10) / 2,
               child: const IgnorePointer(
                 child: Icon(Icons.star, size: 10, color: Colors.white),
               ),
