@@ -9,7 +9,6 @@ import '../services/backup_service.dart';
 import '../widgets/moneda_card.dart';
 import 'ajustes_screen.dart';
 import 'detalle_screen.dart';
-import 'estadisticas_screen.dart';
 import 'form_screen.dart';
 import 'referencias_screen.dart';
 
@@ -170,14 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _abrirEstadisticas() async {
-    _busquedaFocus.unfocus();
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
-    );
-  }
-
   Future<void> _abrirDialogoBackup() async {
     await showDialog<void>(
       context: context,
@@ -331,17 +322,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               tooltip: 'Referencias',
               onPressed: _abrirReferencias,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.bar_chart_outlined,
-                color: theme.colorScheme.primary,
-                shadows: const [
-                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
-                ],
-              ),
-              tooltip: 'Estadísticas',
-              onPressed: _abrirEstadisticas,
             ),
             IconButton(
               icon: Icon(
