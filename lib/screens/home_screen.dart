@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Text(
               'Puedes buscar por país, metal, año, grado Sheldon, '
-              'conmemorativas, FAO o Hégira (AH).',
+              'conmemorativas, FAO, Hégira (AH) o vendidas.',
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ),
@@ -350,8 +350,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 onChanged: _onBusquedaCambiada,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: _busquedaFocus.hasFocus
-                      ? 'País, metal, año, Sheldon, FAO, AH…'
+                    hintText: _busquedaFocus.hasFocus
+                      ? 'País, metal, año, Sheldon, FAO, AH, vendidas…'
                       : 'Buscar en la colección…',
                   prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.6)),
                   suffixIcon: ValueListenableBuilder<TextEditingValue>(
