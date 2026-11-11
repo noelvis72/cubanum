@@ -583,36 +583,63 @@ class _FormScreenState extends State<FormScreen> {
                     etiqueta: 'Período de acuñación',
                     icono: Icons.history_edu_outlined,
                   ),
-                  
-              // Año + checkbox AH
+              
+                // Año + checkbox AH
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                    Expanded(
+                      Expanded(
+                        flex: 3,
+                        child: _TextoForm(
+                          controller: _anioCtrl,
+                          etiqueta: 'Año *',
+                          icono: Icons.calendar_today_outlined,
+                          tipoTeclado: const TextInputType.numberWithOptions(decimal: false),
+                          formatters: _anioFormatters,
+                          validadorObligatorio: true,
+                          validadorExtra: (v) {
+                            if (v == null || v.trim().isEmpty) return null;
+                            final n = int.tryParse(v.trim());
+                            if (n == null) return 'Solo números';
+                            if (n < 1 || n > 9999) return 'Año entre 1 y 9999';
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
                         flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2, bottom: 0),
-                              child: Text(
-                                'AH (Hégira)',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: theme.colorScheme.outline.withOpacity(0.6),
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Checkbox(
+                                  value: _esHejira,
+                                  onChanged: (v) => setState(() => _esHejira = v ?? false),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
                                 ),
-                              ),
+                                Flexible(
+                                  child: Text(
+                                    'AH (Hégira)',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(
-                              height: 34,
-                              child: Checkbox(
-                                value: _esHejira,
-                                onChanged: (v) => setState(() => _esHejira = v ?? false),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ],
