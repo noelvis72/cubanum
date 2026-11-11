@@ -125,7 +125,7 @@ class Moneda {
         ubicacion: '',
       );
 
-  bool get vendida => fechaVenta != null || precioVenta != null;
+    bool get vendida => precioVenta != null;
 
   Map<String, dynamic> toMap() => {
         if (id != null) 'id': id,
