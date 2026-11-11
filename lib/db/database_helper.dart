@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -297,6 +298,38 @@ class DatabaseHelper {
     return db.delete(tablaMetales, where: 'nombre = ?', whereArgs: [nombre]);
   }
 
+    /// Elimina todas las monedas vendidas (con precio_venta distinto de null)
+  /// y sus fotos del almacenamiento. Devuelve cuántas monedas se borraron.
+  Future<int> eliminarVendidas() async {
+    final db = await database;
+    final rows = await db.query(
+      tablaMonedas,
+      columns: ['id', 'foto_anverso', 'foto_reverso', 'foto_canto', 'foto_km'],
+      where: 'precio_venta IS NOT NULL',
+    );
+
+    // Borrar fotos del almacenamiento
+    for (final row in rows) {
+      for (final col in ['foto_anverso', 'foto_reverso', 'foto_canto', 'foto_km']) {
+        final ruta = row[col] as String?;
+        if (ruta != null && ruta.isNotEmpty) {
+          final archivo = File(ruta);
+          if (await archivo.exists()) {
+            try {
+              await archivo.delete();
+            } catch (_) {}
+          }
+        }
+      }
+    }
+
+    // Borrar las filas de la base de datos
+    return db.delete(
+      tablaMonedas,
+      where: 'precio_venta IS NOT NULL',
+    );
+  }
+  
   // Cantos personalizados
   Future<int> insertarCantoPersonalizado(String nombre) async {
     final db = await database;
