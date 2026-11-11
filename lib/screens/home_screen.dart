@@ -512,7 +512,7 @@ class _EstadoVacio extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
                     hayFiltro
-                        ? 'Prueba con otro país, denominación o año.'
+                        ? 'Cambia el criterio de búsqueda para mejores resultados.'
                         : 'Pulsa el botón “+” para añadir tu primera moneda.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
