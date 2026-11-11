@@ -298,6 +298,15 @@ class DatabaseHelper {
     return db.delete(tablaMetales, where: 'nombre = ?', whereArgs: [nombre]);
   }
 
+    /// Cuenta cuántas monedas están marcadas como vendidas.
+  Future<int> contarVendidas() async {
+    final db = await database;
+    final res = await db.rawQuery(
+      'SELECT COUNT(*) AS c FROM $tablaMonedas WHERE precio_venta IS NOT NULL',
+    );
+    return (res.first['c'] as int?) ?? 0;
+  }
+  
     /// Elimina todas las monedas vendidas (con precio_venta distinto de null)
   /// y sus fotos del almacenamiento. Devuelve cuántas monedas se borraron.
   Future<int> eliminarVendidas() async {
