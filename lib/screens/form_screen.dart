@@ -588,33 +588,14 @@ class _FormScreenState extends State<FormScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 3,
-                        child: _TextoForm(
-                          controller: _anioCtrl,
-                          etiqueta: 'Año *',
-                          icono: Icons.calendar_today_outlined,
-                          tipoTeclado: const TextInputType.numberWithOptions(decimal: false),
-                          formatters: _anioFormatters,
-                          validadorObligatorio: true,
-                          validadorExtra: (v) {
-                            if (v == null || v.trim().isEmpty) return null;
-                            final n = int.tryParse(v.trim());
-                            if (n == null) return 'Solo números';
-                            if (n < 1 || n > 9999) return 'Año entre 1 y 9999';
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                     Expanded(
+                    Expanded(
                         flex: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.only(top: 8, bottom: 0),
+                              padding: const EdgeInsets.only(top: 2, bottom: 0),
                               child: Text(
                                 'AH (Hégira)',
                                 style: theme.textTheme.bodySmall?.copyWith(
@@ -623,7 +604,7 @@ class _FormScreenState extends State<FormScreen> {
                               ),
                             ),
                             SizedBox(
-                              height: 40,
+                              height: 34,
                               child: Checkbox(
                                 value: _esHejira,
                                 onChanged: (v) => setState(() => _esHejira = v ?? false),
