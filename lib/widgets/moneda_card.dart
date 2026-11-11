@@ -128,18 +128,16 @@ class _ChipVendida extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: scheme.outline.withOpacity(0.25),
+        color: const Color(0xFF4A7C59), // verde oliva apagado
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: scheme.outline.withOpacity(0.7), width: 0.8),
       ),
       child: Text(
         'Vendida',
         style: theme.textTheme.labelSmall?.copyWith(
-          color: scheme.onSurface.withOpacity(0.75),
+          color: Colors.white,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.4,
         ),
