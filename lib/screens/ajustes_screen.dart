@@ -240,6 +240,57 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
   }
 
+    Future<void> _confirmarBorrarVendidas() async {
+    // Contar cuántas hay
+    final db = _db;
+    final totalVendidas = await db.contarVendidas();
+    if (!mounted) return;
+
+    if (totalVendidas == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay monedas vendidas para borrar')),
+      );
+      return;
+    }
+
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Borrar monedas vendidas'),
+        content: Text(
+          'Se eliminarán $totalVendidas monedas vendidas de forma permanente.\n\n'
+          'Sus datos y sus fotos también se borrarán.\n\n'
+          'Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmado != true || !mounted) return;
+
+    await _db.eliminarVendidas();
+    if (!mounted) return;
+
+    await _cargarTotal();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Se eliminaron $totalVendidas monedas vendidas')),
+    );
+  }
+  
   Future<void> _eliminarPais(String nombre) async {
     await _db.eliminarPaisPersonalizado(nombre);
     await _cargarListasPersonalizadas();
@@ -490,6 +541,22 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ],
           ),
 
+             ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  Icons.delete_sweep_outlined,
+                  color: theme.colorScheme.error,
+                ),
+                title: Text(
+                  'Borrar monedas vendidas',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+                subtitle: const Text('Elimina las vendidas y sus fotos'),
+                onTap: _confirmarBorrarVendidas,
+              ),
+          
           // ---------------- Acerca de ----------------
           _SeccionAjustes(
             titulo: 'Acerca de',
