@@ -98,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
     overlay.insert(_overlayAyuda!);
 
     _overlayTimer?.cancel();
-    _overlayTimer = Timer(const Duration(seconds: 7), () {
+    _overlayTimer = Timer(const Duration(seconds: 5), () {
       _quitarOverlay();
     });
   }
