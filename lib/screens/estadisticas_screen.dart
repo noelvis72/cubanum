@@ -44,14 +44,19 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
       total++;
       if (m.vendida) vendidas++;
 
+      // Dinero invertido: se suma de TODAS las monedas (compradas).
       if (m.precioCompra != null && m.precioCompra! > 0) {
         final k = _normalizar(m.monedaPrecio);
         inv[k] = (inv[k] ?? 0) + m.precioCompra!;
       }
-      if (m.valorEstimado != null && m.valorEstimado! > 0) {
+
+      // Valor estimado: SOLO de las monedas NO vendidas.
+      if (!m.vendida && m.valorEstimado != null && m.valorEstimado! > 0) {
         final k = _normalizar(m.valorEstimadoMoneda);
         val[k] = (val[k] ?? 0) + m.valorEstimado!;
       }
+
+      // Dinero recuperado: solo de las vendidas (que tengan precio de venta).
       if (m.precioVenta != null && m.precioVenta! > 0) {
         final k = _normalizar(m.monedaVenta);
         rec[k] = (rec[k] ?? 0) + m.precioVenta!;
