@@ -108,9 +108,10 @@ class BackupService {
 
     try {
       // 1. Elegir el archivo
-      final resultado = await FilePicker.platform.pickFiles(
+            final resultado = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['zip'],
+      ).timeout(const Duration(minutes: 5)
       );
 
       if (resultado == null || resultado.files.isEmpty) return false;
@@ -171,8 +172,11 @@ class BackupService {
         }
       }
 
-      // 8. La BD se reabrirá automáticamente la próxima vez que se use
-      // (DatabaseHelper.instance.database se encarga de abrirla).
+      // 8. Forzar la reapertura de la BD con la nueva versión.
+      // Esto es CRÍTICO: sin esto, cualquier consulta posterior se queda colgada.
+      try {
+        await DatabaseHelper.instance.contar();
+      } catch (_) {}
 
       return true;
     } catch (e) {
