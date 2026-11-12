@@ -225,7 +225,10 @@ class ExportService {
     if (m.diametroMm != null) addFila('Diámetro', '${_numATexto(m.diametroMm!)} mm');
     if (m.grosorMm != null) addFila('Grosor', '${_numATexto(m.grosorMm!)} mm');
     addFila('Forma', m.forma);
+    addFila('Ley', m.ley);
     addFila('Canto', m.canto);
+    addFila('Alineación', m.alineacion);
+    addFila('Resellada', m.resellada ? 'Sí' : 'No');
     addFila('Grado Sheldon', m.gradoSheldon);
     addFila('Autenticidad', m.autenticidad);
     addFila('Detalles visibles', m.detallesVisibles);
@@ -353,7 +356,10 @@ class ExportService {
       ('Diámetro (mm)', (m) => m.diametroMm?.toString() ?? '', 'num'),
       ('Grosor (mm)', (m) => m.grosorMm?.toString() ?? '', 'num'),
       ('Forma', (m) => m.forma, 'text'),
+      ('Ley', (m) => m.ley, 'text'),
       ('Canto', (m) => m.canto, 'text'),
+      ('Alineación', (m) => m.alineacion, 'text'),
+      ('Resellada', (m) => m.resellada ? 'Sí' : 'No', 'text'),
       ('Grado Sheldon', (m) => m.gradoSheldon, 'text'),
       ('Detalles visibles', (m) => m.detallesVisibles, 'text'),
       ('Autenticidad', (m) => m.autenticidad, 'text'),
