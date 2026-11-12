@@ -592,7 +592,7 @@ class _FormScreenState extends State<FormScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Expanded(
-                        flex: 3,
+                        flex: 2,
                         child: _TextoForm(
                           controller: _anioCtrl,
                           etiqueta: 'Año *',
@@ -611,7 +611,7 @@ class _FormScreenState extends State<FormScreen> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        flex: 2,
+                        flex: 3,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Container(
