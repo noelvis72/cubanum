@@ -520,7 +520,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           ),
 
           // ---------------- Peligro ----------------
-          _SeccionAjustes(
+                    _SeccionAjustes(
             titulo: 'Peligro',
             icono: Icons.warning_amber_outlined,
             hijos: [
@@ -539,10 +539,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 subtitle: const Text('Esta acción no se puede deshacer'),
                 onTap: _confirmarBorrado,
               ),
-            ],
-          ),
-
-             ListTile(
+              const Divider(height: 8),
+              ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(
                   Icons.delete_sweep_outlined,
@@ -557,6 +555,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 subtitle: const Text('Elimina las vendidas y sus fotos'),
                 onTap: _confirmarBorrarVendidas,
               ),
+            ],
+          ),
           
           // ---------------- Acerca de ----------------
           _SeccionAjustes(
