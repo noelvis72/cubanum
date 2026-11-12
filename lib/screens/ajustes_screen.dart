@@ -182,7 +182,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
     setState(() => _creandoBackup = true);
     try {
-      final ok = await BackupService.restaurarBackup();
+      final ok = await BackupService.restaurarBackup()
+          .timeout(const Duration(minutes: 2), onTimeout: () => false);
       if (!mounted) return;
       await _cargarTotal();
       if (!mounted) return;
