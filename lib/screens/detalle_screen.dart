@@ -196,6 +196,7 @@ _BloqueDetalle(
                _FilaDato('Ley', m.ley),
                _FilaDato('Canto', m.canto),
                _FilaDato('Alineación', m.alineacion),
+               _FilaDato('Resellada', m.resellada ? 'Sí' : 'No'),
              ],
            ),
             _BloqueDetalle(
