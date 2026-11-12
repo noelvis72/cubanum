@@ -47,6 +47,7 @@ class _FormScreenState extends State<FormScreen> {
   bool _conmemorativa = false;
   bool _fao = false;
   bool _esHejira = false;
+  bool _resellada = false;
   String? _paisSeleccionado;
   String? _formaSeleccionada;
   String? _metalSeleccionado;
@@ -189,6 +190,7 @@ class _FormScreenState extends State<FormScreen> {
     _conmemorativa = m?.conmemorativa ?? false;
     _fao           = m?.fao ?? false;
     _esHejira      = m?.esHejira ?? false;
+    _resellada     = m?.resellada ?? false;
     _autenticidad  = (m != null && m.autenticidad.isNotEmpty) ? m.autenticidad : 'Original';
     _monedaPrecio  = (m != null && m.monedaPrecio.isNotEmpty) ? m.monedaPrecio : 'CUP';
     _valorEstimadoMoneda = (m != null && m.valorEstimadoMoneda.isNotEmpty) ? m.valorEstimadoMoneda : 'CUP';
@@ -457,6 +459,7 @@ class _FormScreenState extends State<FormScreen> {
       ley: _leyCtrl.text.trim(),
       canto: _cantoSeleccionado ?? '',
       alineacion: _alineacionSeleccionada ?? '',
+      resellada: _resellada,
       gradoSheldon: _gradoSheldon ?? '',
       detallesVisibles: _detallesCtrl.text.trim(),
       autenticidad: _autenticidad,
@@ -747,6 +750,13 @@ class _FormScreenState extends State<FormScreen> {
                     valor: _alineacionSeleccionada,
                     items: _alineaciones,
                     onChanged: (v) => setState(() => _alineacionSeleccionada = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text('Resellada', style: theme.textTheme.bodyLarge),
+                    value: _resellada,
+                    onChanged: (v) => setState(() => _resellada = v),
                   ),
                 ],
               ),
