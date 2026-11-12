@@ -103,15 +103,15 @@ class BackupService {
 
   /// Restaura un backup desde un ZIP elegido por el usuario.
   /// Devuelve true si la restauración fue exitosa.
-  static Future<bool> restaurarBackup() async {
+    static Future<bool> restaurarBackup() async {
     File? archivoSeleccionado;
+    bool exito = false;
 
     try {
       // 1. Elegir el archivo
-            final resultado = await FilePicker.platform.pickFiles(
+      final resultado = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['zip'],
-      ).timeout(const Duration(minutes: 5)
       );
 
       if (resultado == null || resultado.files.isEmpty) return false;
@@ -119,11 +119,10 @@ class BackupService {
       archivoSeleccionado = File(resultado.files.first.path!);
       if (!await archivoSeleccionado.exists()) return false;
 
-      // 2. Leer el ZIP
+      // 2. Leer el ZIP y verificar que contiene cubanum.db
       final bytes = await archivoSeleccionado.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
 
-      // 3. Verificar que contiene cubanum.db
       final archivoDb = archive.files.firstWhere(
         (f) => f.name == 'cubanum.db' && f.isFile,
         orElse: () => throw Exception('El ZIP no contiene cubanum.db'),
@@ -135,13 +134,12 @@ class BackupService {
       final rutaDbBackup = p.join(dirDocs.path, 'cubanum.db.bak');
       final rutaFotosBackup = p.join(dirDocs.path, 'fotos.bak');
 
-      // 4. Backup automático de la BD y fotos actuales
+      // 3. Backup automático de la BD y fotos actuales
       final dbActual = File(rutaDbActual);
       if (await dbActual.exists()) {
         await dbActual.copy(rutaDbBackup);
       }
       if (await dirFotosActual.exists()) {
-        // Mover fotos actuales a fotos.bak
         final dirFotosBak = Directory(rutaFotosBackup);
         if (await dirFotosBak.exists()) {
           await dirFotosBak.delete(recursive: true);
@@ -149,16 +147,15 @@ class BackupService {
         await dirFotosActual.rename(rutaFotosBackup);
       }
 
-      // 5. Cerrar la BD
-      try {
-        await DatabaseHelper.instance.cerrar();
-      } catch (_) {}
+      // 4. Cerrar la BD (¡importante!) y esperar un momento
+      await DatabaseHelper.instance.cerrar();
+      await Future.delayed(const Duration(milliseconds: 300)); // Dar tiempo al sistema
 
-      // 6. Extraer la BD nueva
+      // 5. Escribir la nueva BD
       final datosDb = archivoDb.content as List<int>;
       await File(rutaDbActual).writeAsBytes(datosDb, flush: true);
 
-      // 7. Extraer las fotos nuevas
+      // 6. Extraer las fotos nuevas
       final dirFotosNuevas = Directory(p.join(dirDocs.path, 'fotos'));
       if (!await dirFotosNuevas.exists()) {
         await dirFotosNuevas.create(recursive: true);
@@ -173,6 +170,33 @@ class BackupService {
           await archivoFoto.writeAsBytes(datos, flush: true);
         }
       }
+
+      exito = true;
+    } catch (e) {
+      exito = false;
+    } finally {
+      // 7. CRÍTICO: Reabrir la BD SIEMPRE, pase lo que pase
+      try {
+        // Forzar la reapertura haciendo una consulta simple
+        await DatabaseHelper.instance.contar();
+      } catch (_) {
+        // Si falla, intentar recuperar del backup automático
+        try {
+          final dirDocs = await getApplicationDocumentsDirectory();
+          final rutaDbBackup = p.join(dirDocs.path, 'cubanum.db.bak');
+          final rutaDbActual = p.join(dirDocs.path, 'cubanum.db');
+          final backup = File(rutaDbBackup);
+          if (await backup.exists()) {
+            await DatabaseHelper.instance.cerrar();
+            await backup.copy(rutaDbActual);
+            await DatabaseHelper.instance.contar(); // Reabrir
+          }
+        } catch (_) {}
+      }
+    }
+
+    return exito;
+  }
 
       // 8. Forzar la reapertura de la BD con la nueva versión.
       // Esto es CRÍTICO: sin esto, cualquier consulta posterior se queda colgada.
