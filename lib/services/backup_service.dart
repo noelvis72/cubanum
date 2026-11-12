@@ -150,7 +150,9 @@ class BackupService {
       }
 
       // 5. Cerrar la BD
-      await DatabaseHelper.instance.cerrar();
+      try {
+        await DatabaseHelper.instance.cerrar();
+      } catch (_) {}
 
       // 6. Extraer la BD nueva
       final datosDb = archivoDb.content as List<int>;
