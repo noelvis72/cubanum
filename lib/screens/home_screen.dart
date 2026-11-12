@@ -248,7 +248,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (confirmado != true || !mounted) return;
 
-    final ok = await BackupService.restaurarBackup();
+   final ok = await BackupService.restaurarBackup()
+        .timeout(const Duration(minutes: 2), onTimeout: () => false);
     if (!mounted) return;
     await _cargarMonedas();
     if (!mounted) return;
