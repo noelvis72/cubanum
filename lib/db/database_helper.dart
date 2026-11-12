@@ -10,7 +10,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbNombre = 'cubanum.db';
-  static const int _dbVersion = 5;
+  static const int _dbVersion = 6;
   static const String tablaMonedas = 'monedas';
   static const String tablaPaises = 'paises_personalizados';
   static const String tablaMetales = 'metales_personalizados';
@@ -63,6 +63,7 @@ class DatabaseHelper {
         ley                    TEXT    NOT NULL DEFAULT '',
         canto                  TEXT    NOT NULL DEFAULT '',
         alineacion             TEXT    NOT NULL DEFAULT '',
+        resellada              INTEGER NOT NULL DEFAULT 0,
         grado_sheldon          TEXT    NOT NULL DEFAULT '',
         detalles_visibles      TEXT    NOT NULL DEFAULT '',
         autenticidad           TEXT    NOT NULL DEFAULT 'Original',
@@ -109,6 +110,9 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_monedas_denominacion ON $tablaMonedas(denominacion)');
     await db.execute('CREATE INDEX idx_monedas_anio ON $tablaMonedas(anio)');
     await db.execute('CREATE INDEX idx_monedas_km ON $tablaMonedas(km_catalogo)');
+    await db.execute('CREATE INDEX idx_monedas_metal ON $tablaMonedas(metal)');
+    await db.execute('CREATE INDEX idx_monedas_autenticidad ON $tablaMonedas(autenticidad)');
+    await db.execute('CREATE INDEX idx_monedas_forma ON $tablaMonedas(forma)');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -149,6 +153,17 @@ class DatabaseHelper {
 
     if (oldVersion < 5) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN es_hejira INTEGER NOT NULL DEFAULT 0');
+    }
+    
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN resellada INTEGER NOT NULL DEFAULT 0');
+    }
+
+   if (oldVersion < 6) {
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN resellada INTEGER NOT NULL DEFAULT 0');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_monedas_metal ON $tablaMonedas(metal)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_monedas_autenticidad ON $tablaMonedas(autenticidad)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_monedas_forma ON $tablaMonedas(forma)');
     }
   }
 
