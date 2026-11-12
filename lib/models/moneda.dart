@@ -20,6 +20,7 @@ class Moneda {
   final String ley;
   final String canto;
   final String alineacion;
+  final bool resellada;
 
   final String gradoSheldon;
   final String detallesVisibles;
@@ -64,6 +65,7 @@ class Moneda {
     required this.ley,
     required this.canto,
     required this.alineacion,
+    required this.resellada,
     required this.gradoSheldon,
     required this.detallesVisibles,
     required this.autenticidad,
@@ -105,6 +107,7 @@ class Moneda {
         ley: '',
         canto: '',
         alineacion: '',
+        resellada: false,
         gradoSheldon: '',
         detallesVisibles: '',
         autenticidad: 'Original',
@@ -148,6 +151,7 @@ class Moneda {
         'ley': ley,
         'canto': canto,
         'alineacion': alineacion,
+        'resellada': resellada ? 1 : 0,
         'grado_sheldon': gradoSheldon,
         'detalles_visibles': detallesVisibles,
         'autenticidad': autenticidad,
@@ -189,6 +193,7 @@ class Moneda {
         ley: (map['ley'] as String?) ?? '',
         canto: (map['canto'] as String?) ?? '',
         alineacion: (map['alineacion'] as String?) ?? '',
+        resellada: (map['resellada'] as int? ?? 0) == 1,
         gradoSheldon: (map['grado_sheldon'] as String?) ?? '',
         detallesVisibles: (map['detalles_visibles'] as String?) ?? '',
         autenticidad: (map['autenticidad'] as String?) ?? 'Original',
@@ -262,6 +267,7 @@ class Moneda {
     String? ley,
     String? canto,
     String? alineacion,
+    bool? resellada,
     String? gradoSheldon,
     String? detallesVisibles,
     String? autenticidad,
@@ -315,6 +321,7 @@ class Moneda {
       ley: ley ?? this.ley,
       canto: canto ?? this.canto,
       alineacion: alineacion ?? this.alineacion,
+      resellada: resellada ?? this.resellada,
       gradoSheldon: gradoSheldon ?? this.gradoSheldon,
       detallesVisibles: detallesVisibles ?? this.detallesVisibles,
       autenticidad: autenticidad ?? this.autenticidad,
