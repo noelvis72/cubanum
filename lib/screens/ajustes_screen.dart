@@ -150,7 +150,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     }
   }
 
-  Future<void> _restaurarBackup() async {
+    Future<void> _restaurarBackup() async {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -158,8 +158,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         content: const Text(
           'Esto REEMPLAZARÁ todas las monedas y fotos actuales por las de '
           'la copia de seguridad.\n\n'
-          'Se guardará una copia automática de la colección actual por si '
-          'algo falla.\n\n'
+          'Se guardará una copia automática de la colección actual.\n\n'
           '¿Continuar?',
         ),
         actions: [
@@ -182,8 +181,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
     setState(() => _creandoBackup = true);
     try {
-      final ok = await BackupService.restaurarBackup()
-          .timeout(const Duration(minutes: 2), onTimeout: () => false);
+      final ok = await BackupService.restaurarBackup();
       if (!mounted) return;
       await _cargarTotal();
       if (!mounted) return;
