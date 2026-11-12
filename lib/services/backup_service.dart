@@ -5,7 +5,6 @@ import 'package:archive/archive.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../db/database_helper.dart';
@@ -21,9 +20,8 @@ class BackupService {
   static const String _claveContador = 'cubanum_salva_contador';
   static const String _claveUltimaSalva = 'cubanum_ultima_salva';
 
-    /// Crea un ZIP con la BD y las fotos, y abre el diálogo nativo
+  /// Crea un ZIP con la BD y las fotos, y abre el diálogo nativo
   /// "Guardar como" para que el usuario elija dónde guardarlo.
-  /// Devuelve true si el usuario guardó el archivo, false si canceló o falló.
   static Future<bool> crearBackup() async {
     try {
       final dirDocs = await getApplicationDocumentsDirectory();
@@ -50,13 +48,11 @@ class BackupService {
       // Construir el ZIP en memoria
       final archive = Archive();
 
-      // Añadir la BD
       final bytesDb = await dbFile.readAsBytes();
       archive.addFile(
         ArchiveFile('cubanum.db', bytesDb.length, bytesDb),
       );
 
-      // Añadir las fotos
       if (await dirFotos.exists()) {
         final fotos = await dirFotos.list().toList();
         for (final f in fotos) {
@@ -70,7 +66,6 @@ class BackupService {
         }
       }
 
-      // Codificar el ZIP a bytes
       final zipData = ZipEncoder().encode(archive);
       if (zipData == null) {
         throw Exception('Error al crear el ZIP.');
@@ -85,16 +80,13 @@ class BackupService {
         allowedExtensions: ['zip'],
       );
 
-      // Si el usuario canceló, no se ha guardado
+      // Si el usuario canceló, revertir el contador
       if (uri == null) {
-        // Revertir el contador porque no se completó la salva
         await prefs.setInt(_claveContador, contador - 1);
         return false;
       }
 
-      // Guardar la fecha de la última salva
       await prefs.setString(_claveUltimaSalva, ahora.toIso8601String());
-
       return true;
     } catch (e) {
       return false;
@@ -103,8 +95,7 @@ class BackupService {
 
   /// Restaura un backup desde un ZIP elegido por el usuario.
   /// Devuelve true si la restauración fue exitosa.
-    static Future<bool> restaurarBackup() async {
-    File? archivoSeleccionado;
+  static Future<bool> restaurarBackup() async {
     bool exito = false;
 
     try {
@@ -116,7 +107,7 @@ class BackupService {
 
       if (resultado == null || resultado.files.isEmpty) return false;
 
-      archivoSeleccionado = File(resultado.files.first.path!);
+      final archivoSeleccionado = File(resultado.files.first.path!);
       if (!await archivoSeleccionado.exists()) return false;
 
       // 2. Leer el ZIP y verificar que contiene cubanum.db
@@ -147,9 +138,9 @@ class BackupService {
         await dirFotosActual.rename(rutaFotosBackup);
       }
 
-      // 4. Cerrar la BD (¡importante!) y esperar un momento
+      // 4. Cerrar la BD antes de sobrescribir el archivo
       await DatabaseHelper.instance.cerrar();
-      await Future.delayed(const Duration(milliseconds: 300)); // Dar tiempo al sistema
+      await Future.delayed(const Duration(milliseconds: 300));
 
       // 5. Escribir la nueva BD
       final datosDb = archivoDb.content as List<int>;
@@ -175,12 +166,11 @@ class BackupService {
     } catch (e) {
       exito = false;
     } finally {
-      // 7. CRÍTICO: Reabrir la BD SIEMPRE, pase lo que pase
+      // 7. Reabrir la BD SIEMPRE, pase lo que pase.
       try {
-        // Forzar la reapertura haciendo una consulta simple
         await DatabaseHelper.instance.contar();
       } catch (_) {
-        // Si falla, intentar recuperar del backup automático
+        // Si la reapertura falla, recuperar del backup automático
         try {
           final dirDocs = await getApplicationDocumentsDirectory();
           final rutaDbBackup = p.join(dirDocs.path, 'cubanum.db.bak');
@@ -189,35 +179,13 @@ class BackupService {
           if (await backup.exists()) {
             await DatabaseHelper.instance.cerrar();
             await backup.copy(rutaDbActual);
-            await DatabaseHelper.instance.contar(); // Reabrir
+            await DatabaseHelper.instance.contar();
           }
         } catch (_) {}
       }
     }
 
     return exito;
-  }
-
-      // 8. Forzar la reapertura de la BD con la nueva versión.
-      // Esto es CRÍTICO: sin esto, cualquier consulta posterior se queda colgada.
-      try {
-        await DatabaseHelper.instance.contar();
-      } catch (_) {}
-
-      return true;
-    } catch (e) {
-      // Si algo falla después del paso 5 (BD cerrada), intentar recuperar
-      try {
-        final dirDocs = await getApplicationDocumentsDirectory();
-        final rutaDbBackup = p.join(dirDocs.path, 'cubanum.db.bak');
-        final rutaDbActual = p.join(dirDocs.path, 'cubanum.db');
-        final backup = File(rutaDbBackup);
-        if (await backup.exists()) {
-          await backup.copy(rutaDbActual);
-        }
-      } catch (_) {}
-      return false;
-    }
   }
 
   /// Devuelve la fecha de la última salva, o null si no hay.
@@ -229,7 +197,6 @@ class BackupService {
   }
 
   /// Comprueba si han pasado más de [dias] días desde la última salva.
-  /// Si nunca se ha hecho, devuelve true si hay más de [minMonedas] monedas.
   static Future<bool> debeRecordarSalva({
     int dias = 30,
     int minMonedas = 20,
