@@ -206,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
- Future<void> _crearBackupDesdeHome() async {
+   Future<void> _crearBackupDesdeHome() async {
     final guardado = await BackupService.crearBackup();
     if (!mounted) return;
     if (guardado) {
@@ -219,8 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
-
-  Future<void> _restaurarBackupDesdeHome() async {
+    Future<void> _restaurarBackupDesdeHome() async {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -248,8 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (confirmado != true || !mounted) return;
 
-   final ok = await BackupService.restaurarBackup()
-        .timeout(const Duration(minutes: 2), onTimeout: () => false);
+    final ok = await BackupService.restaurarBackup();
     if (!mounted) return;
     await _cargarMonedas();
     if (!mounted) return;
