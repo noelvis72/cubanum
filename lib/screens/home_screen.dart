@@ -86,10 +86,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 2)),
               ],
             ),
-            child: Text(
+           child: Text(
               'Puedes buscar por país, metal, año, grado Sheldon, '
-              'conmemorativas, FAO, Hégira (AH) o vendidas.',
-              style: Theme.of(ctx).textTheme.bodySmall,
+              'conmemorativas, FAO, Hégira (AH), vendidas o reselladas.',
             ),
           ),
         ),
