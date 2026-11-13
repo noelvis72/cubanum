@@ -15,6 +15,7 @@ class DatabaseHelper {
   static const String tablaPaises = 'paises_personalizados';
   static const String tablaMetales = 'metales_personalizados';
   static const String tablaCantos = 'cantos_personalizados';
+  static const String tablaVentas = 'ventas';
 
   Database? _db;
 
@@ -105,7 +106,18 @@ class DatabaseHelper {
         nombre TEXT NOT NULL UNIQUE
       )
     ''');
-
+    
+    await db.execute('''
+      CREATE TABLE $tablaVentas (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_moneda      INTEGER,
+        descripcion    TEXT NOT NULL DEFAULT '',
+        precio         REAL NOT NULL DEFAULT 0,
+        moneda         TEXT NOT NULL DEFAULT 'CUP',
+        fecha_venta    TEXT
+      )
+    ''');
+    
     await db.execute('CREATE INDEX idx_monedas_pais ON $tablaMonedas(pais)');
     await db.execute('CREATE INDEX idx_monedas_denominacion ON $tablaMonedas(denominacion)');
     await db.execute('CREATE INDEX idx_monedas_anio ON $tablaMonedas(anio)');
@@ -167,6 +179,35 @@ class DatabaseHelper {
     }
   }
 
+   if (oldVersion < 7) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tablaVentas (
+          id             INTEGER PRIMARY KEY AUTOINCREMENT,
+          id_moneda      INTEGER,
+          descripcion    TEXT NOT NULL DEFAULT '',
+          precio         REAL NOT NULL DEFAULT 0,
+          moneda         TEXT NOT NULL DEFAULT 'CUP',
+          fecha_venta    TEXT
+        )
+      ''');
+
+      // Migrar las monedas ya vendidas a la tabla ventas
+      final vendidas = await db.query(
+        tablaMonedas,
+        where: 'precio_venta IS NOT NULL',
+      );
+      for (final row in vendidas) {
+        final m = Moneda.fromMap(row);
+        await db.insert(tablaVentas, {
+          'id_moneda': m.id,
+          'descripcion': '${m.pais} · ${m.denominacion} · ${m.anio}',
+          'precio': m.precioVenta ?? 0,
+          'moneda': m.monedaVenta,
+          'fecha_venta': m.fechaVenta?.toIso8601String(),
+        });
+      }
+    }
+  
   Future<int> insertar(Moneda moneda) async {
     final db = await database;
     final map = moneda.toMap()..remove('id');
