@@ -233,7 +233,10 @@ class DatabaseHelper {
         qLower == 'vendidas' ||
         qLower == 'vendido' ||
         qLower == 'vendidos';
-    
+    final quiereReselladas = qLower == 'resellada' ||
+        qLower == 'reselladas' ||
+        qLower == 'resellado' ||
+        qLower == 'resellados';
     final condiciones = <String>[
       'pais           LIKE ?',
       'denominacion   LIKE ?',
@@ -258,6 +261,7 @@ class DatabaseHelper {
     if (quiereFao) condiciones.add('fao = 1');
     if (quiereAh) condiciones.add('es_hejira = 1');
     if (quiereVendidas) condiciones.add('precio_venta IS NOT NULL');
+    if (quiereReselladas) condiciones.add('resellada = 1');
     
     final rows = await db.query(
       tablaMonedas,
