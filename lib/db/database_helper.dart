@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -10,7 +11,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbNombre = 'cubanum.db';
-  static const int _dbVersion = 6;
+  static const int _dbVersion = 7;
   static const String tablaMonedas = 'monedas';
   static const String tablaPaises = 'paises_personalizados';
   static const String tablaMetales = 'metales_personalizados';
@@ -106,7 +107,7 @@ class DatabaseHelper {
         nombre TEXT NOT NULL UNIQUE
       )
     ''');
-    
+
     await db.execute('''
       CREATE TABLE $tablaVentas (
         id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,7 +118,7 @@ class DatabaseHelper {
         fecha_venta    TEXT
       )
     ''');
-    
+
     await db.execute('CREATE INDEX idx_monedas_pais ON $tablaMonedas(pais)');
     await db.execute('CREATE INDEX idx_monedas_denominacion ON $tablaMonedas(denominacion)');
     await db.execute('CREATE INDEX idx_monedas_anio ON $tablaMonedas(anio)');
@@ -166,20 +167,15 @@ class DatabaseHelper {
     if (oldVersion < 5) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN es_hejira INTEGER NOT NULL DEFAULT 0');
     }
-    
-    if (oldVersion < 6) {
-      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN resellada INTEGER NOT NULL DEFAULT 0');
-    }
 
-   if (oldVersion < 6) {
+    if (oldVersion < 6) {
       await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN resellada INTEGER NOT NULL DEFAULT 0');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_monedas_metal ON $tablaMonedas(metal)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_monedas_autenticidad ON $tablaMonedas(autenticidad)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_monedas_forma ON $tablaMonedas(forma)');
     }
-  }
 
-   if (oldVersion < 7) {
+    if (oldVersion < 7) {
       await db.execute('''
         CREATE TABLE IF NOT EXISTS $tablaVentas (
           id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -191,7 +187,7 @@ class DatabaseHelper {
         )
       ''');
 
-      // Migrar las monedas ya vendidas a la tabla ventas
+      // Migrar monedas ya vendidas a la tabla ventas
       final vendidas = await db.query(
         tablaMonedas,
         where: 'precio_venta IS NOT NULL',
@@ -207,11 +203,24 @@ class DatabaseHelper {
         });
       }
     }
-  
+  }
+
+  // ---------------- Monedas ----------------
+
   Future<int> insertar(Moneda moneda) async {
     final db = await database;
     final map = moneda.toMap()..remove('id');
-    return db.insert(tablaMonedas, map);
+    final id = await db.insert(tablaMonedas, map);
+    if (moneda.precioVenta != null) {
+      await db.insert(tablaVentas, {
+        'id_moneda': id,
+        'descripcion': '${moneda.pais} · ${moneda.denominacion} · ${moneda.anio}',
+        'precio': moneda.precioVenta,
+        'moneda': moneda.monedaVenta,
+        'fecha_venta': moneda.fechaVenta?.toIso8601String(),
+      });
+    }
+    return id;
   }
 
   Future<int> actualizar(Moneda moneda) async {
@@ -219,16 +228,34 @@ class DatabaseHelper {
       throw ArgumentError('No se puede actualizar una moneda sin id.');
     }
     final db = await database;
-    return db.update(
+
+    // Eliminar la venta anterior (si la había)
+    await db.delete(tablaVentas, where: 'id_moneda = ?', whereArgs: [moneda.id]);
+
+    final filas = await db.update(
       tablaMonedas,
       moneda.toMap(),
       where: 'id = ?',
       whereArgs: [moneda.id],
     );
+
+    // Registrar nueva venta si aplica
+    if (moneda.precioVenta != null) {
+      await db.insert(tablaVentas, {
+        'id_moneda': moneda.id,
+        'descripcion': '${moneda.pais} · ${moneda.denominacion} · ${moneda.anio}',
+        'precio': moneda.precioVenta,
+        'moneda': moneda.monedaVenta,
+        'fecha_venta': moneda.fechaVenta?.toIso8601String(),
+      });
+    }
+
+    return filas;
   }
 
   Future<int> eliminar(int id) async {
     final db = await database;
+    // NO se borra la venta: el histórico permanece
     return db.delete(tablaMonedas, where: 'id = ?', whereArgs: [id]);
   }
 
@@ -278,6 +305,7 @@ class DatabaseHelper {
         qLower == 'reselladas' ||
         qLower == 'resellado' ||
         qLower == 'resellados';
+
     final condiciones = <String>[
       'pais           LIKE ?',
       'denominacion   LIKE ?',
@@ -303,7 +331,7 @@ class DatabaseHelper {
     if (quiereAh) condiciones.add('es_hejira = 1');
     if (quiereVendidas) condiciones.add('precio_venta IS NOT NULL');
     if (quiereReselladas) condiciones.add('resellada = 1');
-    
+
     final rows = await db.query(
       tablaMonedas,
       where: condiciones.join(' OR '),
@@ -319,46 +347,6 @@ class DatabaseHelper {
     return (res.first['c'] as int?) ?? 0;
   }
 
-  Future<void> vaciar() async {
-    final db = await database;
-    await db.delete(tablaMonedas);
-  }
-
-  // Países personalizados
-  Future<int> insertarPaisPersonalizado(String nombre) async {
-    final db = await database;
-    final n = nombre.trim();
-    if (n.isEmpty) return -1;
-    return db.insert(tablaPaises, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
-  }
-  Future<List<String>> obtenerPaisesPersonalizados() async {
-    final db = await database;
-    final rows = await db.query(tablaPaises, orderBy: 'nombre COLLATE NOCASE ASC');
-    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
-  }
-  Future<int> eliminarPaisPersonalizado(String nombre) async {
-    final db = await database;
-    return db.delete(tablaPaises, where: 'nombre = ?', whereArgs: [nombre]);
-  }
-
-  // Metales personalizados
-  Future<int> insertarMetalPersonalizado(String nombre) async {
-    final db = await database;
-    final n = nombre.trim();
-    if (n.isEmpty) return -1;
-    return db.insert(tablaMetales, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
-  }
-  Future<List<String>> obtenerMetalesPersonalizados() async {
-    final db = await database;
-    final rows = await db.query(tablaMetales, orderBy: 'nombre COLLATE NOCASE ASC');
-    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
-  }
-  Future<int> eliminarMetalPersonalizado(String nombre) async {
-    final db = await database;
-    return db.delete(tablaMetales, where: 'nombre = ?', whereArgs: [nombre]);
-  }
-
-    /// Cuenta cuántas monedas están marcadas como vendidas.
   Future<int> contarVendidas() async {
     final db = await database;
     final res = await db.rawQuery(
@@ -366,9 +354,15 @@ class DatabaseHelper {
     );
     return (res.first['c'] as int?) ?? 0;
   }
-  
-    /// Elimina todas las monedas vendidas (con precio_venta distinto de null)
-  /// y sus fotos del almacenamiento. Devuelve cuántas monedas se borraron.
+
+  Future<void> vaciar() async {
+    final db = await database;
+    await db.delete(tablaMonedas);
+    // NO se borran las ventas: histórico permanente
+  }
+
+  /// Elimina todas las monedas vendidas y sus fotos.
+  /// NO borra la tabla ventas.
   Future<int> eliminarVendidas() async {
     final db = await database;
     final rows = await db.query(
@@ -377,7 +371,6 @@ class DatabaseHelper {
       where: 'precio_venta IS NOT NULL',
     );
 
-    // Borrar fotos del almacenamiento
     for (final row in rows) {
       for (final col in ['foto_anverso', 'foto_reverso', 'foto_canto', 'foto_km']) {
         final ruta = row[col] as String?;
@@ -392,29 +385,94 @@ class DatabaseHelper {
       }
     }
 
-    // Borrar las filas de la base de datos
-    return db.delete(
-      tablaMonedas,
-      where: 'precio_venta IS NOT NULL',
-    );
+    return db.delete(tablaMonedas, where: 'precio_venta IS NOT NULL');
   }
-  
-  // Cantos personalizados
+
+  // ---------------- Ventas ----------------
+
+  Future<List<Map<String, dynamic>>> obtenerVentas() async {
+    final db = await database;
+    return db.query(tablaVentas, orderBy: 'fecha_venta DESC');
+  }
+
+  /// Suma los precios de venta agrupados por moneda (CUP, USD, EUR).
+  Future<Map<String, double>> totalRecuperadoPorMoneda() async {
+    final db = await database;
+    final rows = await db.rawQuery('''
+      SELECT moneda, SUM(precio) AS total
+      FROM $tablaVentas
+      GROUP BY moneda
+    ''');
+    final map = <String, double>{'CUP': 0, 'USD': 0, 'EUR': 0};
+    for (final row in rows) {
+      final k = (row['moneda'] as String?) ?? 'CUP';
+      final v = (row['total'] as num?)?.toDouble() ?? 0;
+      map[k] = (map[k] ?? 0) + v;
+    }
+    return map;
+  }
+
+  // ---------------- Países personalizados ----------------
+
+  Future<int> insertarPaisPersonalizado(String nombre) async {
+    final db = await database;
+    final n = nombre.trim();
+    if (n.isEmpty) return -1;
+    return db.insert(tablaPaises, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  Future<List<String>> obtenerPaisesPersonalizados() async {
+    final db = await database;
+    final rows = await db.query(tablaPaises, orderBy: 'nombre COLLATE NOCASE ASC');
+    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+  }
+
+  Future<int> eliminarPaisPersonalizado(String nombre) async {
+    final db = await database;
+    return db.delete(tablaPaises, where: 'nombre = ?', whereArgs: [nombre]);
+  }
+
+  // ---------------- Metales personalizados ----------------
+
+  Future<int> insertarMetalPersonalizado(String nombre) async {
+    final db = await database;
+    final n = nombre.trim();
+    if (n.isEmpty) return -1;
+    return db.insert(tablaMetales, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  Future<List<String>> obtenerMetalesPersonalizados() async {
+    final db = await database;
+    final rows = await db.query(tablaMetales, orderBy: 'nombre COLLATE NOCASE ASC');
+    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+  }
+
+  Future<int> eliminarMetalPersonalizado(String nombre) async {
+    final db = await database;
+    return db.delete(tablaMetales, where: 'nombre = ?', whereArgs: [nombre]);
+  }
+
+  // ---------------- Cantos personalizados ----------------
+
   Future<int> insertarCantoPersonalizado(String nombre) async {
     final db = await database;
     final n = nombre.trim();
     if (n.isEmpty) return -1;
     return db.insert(tablaCantos, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
+
   Future<List<String>> obtenerCantosPersonalizados() async {
     final db = await database;
     final rows = await db.query(tablaCantos, orderBy: 'nombre COLLATE NOCASE ASC');
     return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
   }
+
   Future<int> eliminarCantoPersonalizado(String nombre) async {
     final db = await database;
     return db.delete(tablaCantos, where: 'nombre = ?', whereArgs: [nombre]);
   }
+
+  // ---------------- Utilidades ----------------
 
   Future<String> rutaDb() async {
     final dir = await getApplicationDocumentsDirectory();
