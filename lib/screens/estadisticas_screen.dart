@@ -38,30 +38,24 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     int vendidas = 0;
     final inv = <String, double>{'CUP': 0, 'USD': 0, 'EUR': 0};
     final val = <String, double>{'CUP': 0, 'USD': 0, 'EUR': 0};
-    final rec = <String, double>{'CUP': 0, 'USD': 0, 'EUR': 0};
 
     for (final m in monedas) {
       total++;
       if (m.vendida) vendidas++;
 
-      // Dinero invertido: se suma de TODAS las monedas (compradas).
       if (m.precioCompra != null && m.precioCompra! > 0) {
         final k = _normalizar(m.monedaPrecio);
         inv[k] = (inv[k] ?? 0) + m.precioCompra!;
       }
 
-      // Valor estimado: SOLO de las monedas NO vendidas.
       if (!m.vendida && m.valorEstimado != null && m.valorEstimado! > 0) {
         final k = _normalizar(m.valorEstimadoMoneda);
         val[k] = (val[k] ?? 0) + m.valorEstimado!;
       }
-
-      // Dinero recuperado: solo de las vendidas (que tengan precio de venta).
-      if (m.precioVenta != null && m.precioVenta! > 0) {
-        final k = _normalizar(m.monedaVenta);
-        rec[k] = (rec[k] ?? 0) + m.precioVenta!;
-      }
     }
+
+    // Dinero recuperado: leer de la tabla ventas
+    final recuperadoPorMoneda = await _db.totalRecuperadoPorMoneda();
 
     setState(() {
       _totalMonedas = total;
@@ -74,7 +68,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
         ..addAll(val);
       _recuperado
         ..clear()
-        ..addAll(rec);
+        ..addAll(recuperadoPorMoneda);
       _cargando = false;
     });
   }
