@@ -161,6 +161,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
             const SizedBox(height: 16),
             _Encabezado(moneda: m),
             const SizedBox(height: 12),
+            
             // ---------------- Identificación ----------------
 _BloqueDetalle(
   titulo: 'Identificación',
@@ -170,11 +171,23 @@ _BloqueDetalle(
     _FilaDato('Denominación', m.denominacion),
     _FilaDato('Período', m.periodoAcunacion),
     _FilaDato(
-      'Año',
-      m.anio.isEmpty
-          ? ''
-          : (m.esHejira ? '${m.anio} AH' : m.anio),
-    ),
+         'Año',
+          m.anio.isEmpty
+            ? ''
+           : (m.esHejira ? '${m.anio} AH' : m.anio),
+           valorWidget: (m.anio.isEmpty || !m.esHejira)
+                      ? null
+                      : Tooltip(
+                          message: 'AH = Año Hégira (calendario lunar islámico). '
+                              'Ejemplo: 1340 AH ≈ 1921 d.C.',
+                          triggerMode: TooltipTriggerMode.longPress,
+                          showDuration: const Duration(seconds: 5),
+                          child: Text(
+                            '${m.anio} AH',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                ),
     _FilaDato('Ceca', m.ceca),
     _FilaDato('KM#', m.kmCatalogo),
     _FilaDato('Acuñadas', m.acunadas?.toString()),
@@ -492,7 +505,8 @@ class _Puntitos extends StatelessWidget {
 class _FilaDato {
   final String etiqueta;
   final String? valor;
-  const _FilaDato(this.etiqueta, this.valor);
+  final Widget? valorWidget;
+  const _FilaDato(this.etiqueta, this.valor, {this.valorWidget});
 }
 
 class _BloqueDetalle extends StatelessWidget {
@@ -546,8 +560,9 @@ class _BloqueDetalle extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: SelectableText(f.valor!, style: theme.textTheme.bodyLarge),
+               Expanded(
+                      child: f.valorWidget ??
+                          SelectableText(f.valor!, style: theme.textTheme.bodyLarge),
                     ),
                   ],
                 ),
