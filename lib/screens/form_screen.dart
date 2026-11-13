@@ -614,7 +614,7 @@ class _FormScreenState extends State<FormScreen> {
                         flex: 4,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Container(
+                                                    child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               border: Border.all(
@@ -632,12 +632,17 @@ class _FormScreenState extends State<FormScreen> {
                                   visualDensity: VisualDensity.compact,
                                 ),
                                 Flexible(
-                                  child: Text(
-                                    'AH (Hégira)',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
+                                  child: Tooltip(
+                                    message: 'AH = Año Hégira (calendario lunar islámico). '
+                                        'Ejemplo: 1340 AH ≈ 1921 d.C.',
+                                    triggerMode: TooltipTriggerMode.longPress,
+                                    showDuration: const Duration(seconds: 5),
+                                    child: Text(
+                                      'AH',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
