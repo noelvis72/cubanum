@@ -309,7 +309,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes')),
+      appBar: AppBar(title: const Text('Herramientas')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
         children: [
@@ -435,7 +435,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           
           // ---------------- Herramientas numismáticas ----------------
                     _SeccionAjustes(
-            titulo: 'Herramientas numismáticas',
+            titulo: 'Referencias numismáticas',
             icono: Icons.menu_book_outlined,
             hijos: [
               _CardHerramienta(
