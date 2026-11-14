@@ -759,11 +759,11 @@ class ExportService {
       sheet.autoFitColumn(c + 1);
     }
 
-    final bytes = workbook.save();
-    workbook.dispose();
+    final bytes = await workbook.save();
+     workbook.dispose();
 
-    final archivo = await _prepararDestino('xlsx', rutaDestino: rutaDestino);
-    await archivo.writeAsBytes(bytes, flush: true);
-    return archivo;
+final archivo = await _prepararDestino('xlsx', rutaDestino: rutaDestino);
+await archivo.writeAsBytes(bytes, flush: true);
+return archivo;
   }
 }
