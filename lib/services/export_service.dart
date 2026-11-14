@@ -50,10 +50,15 @@ class ExportService {
     }
   }
 
-  // ---------------- PDF ----------------
+  // =====================================================================
+  // PDF
+  // =====================================================================
 
   static Future<File> generarPdf(
     List<Moneda> monedas, {
+    String nombreColeccionista = 'Coleccionista',
+    String fecha = '',
+    bool conFotos = true,
     String? rutaDestino,
   }) async {
     if (monedas.isEmpty) {
@@ -61,94 +66,182 @@ class ExportService {
     }
 
     final doc = pw.Document();
-    final fechaGeneracion = _fmtFecha.format(DateTime.now());
+    final fechaTexto = fecha.isEmpty ? _fmtFecha.format(DateTime.now()) : fecha;
 
+    // Cargar fotos en memoria (solo si es catálogo visual)
     final fotosAnverso = <int, Uint8List?>{};
     final fotosReverso = <int, Uint8List?>{};
-    for (final m in monedas) {
-      fotosAnverso[m.id ?? 0] = await _leerImagen(m.fotoAnverso);
-      fotosReverso[m.id ?? 0] = await _leerImagen(m.fotoReverso);
+    if (conFotos) {
+      for (final m in monedas) {
+        fotosAnverso[m.id ?? 0] = await _leerImagen(m.fotoAnverso);
+        fotosReverso[m.id ?? 0] = await _leerImagen(m.fotoReverso);
+      }
     }
 
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(36, 48, 36, 48),
+
         header: (ctx) => pw.Container(
           alignment: pw.Alignment.centerRight,
-          margin: const pw.EdgeInsets.only(bottom: 12),
+          margin: const pw.EdgeInsets.only(bottom: 8),
           child: pw.Text(
             'CUBANUM',
             style: pw.TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: pw.FontWeight.bold,
-              color: PdfColors.grey700,
+              color: PdfColors.grey600,
               letterSpacing: 1.5,
             ),
           ),
         ),
+
         footer: (ctx) => pw.Container(
           alignment: pw.Alignment.centerRight,
-          margin: const pw.EdgeInsets.only(top: 12),
+          margin: const pw.EdgeInsets.only(top: 10),
           child: pw.Text(
-            'Página ${ctx.pageNumber} de ${ctx.pagesCount}',
-            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+            '$nombreColeccionista · $fechaTexto · Página ${ctx.pageNumber} de ${ctx.pagesCount}',
+            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
           ),
         ),
+
         build: (ctx) {
           final widgets = <pw.Widget>[];
 
-          // Portada
+          // ---------- PORTADA ----------
           widgets.add(pw.SizedBox(height: 60));
           widgets.add(
             pw.Center(
-              child: pw.Column(
-                children: [
-                  pw.Text(
-                    'CUBANUM',
-                    style: pw.TextStyle(
-                      fontSize: 42,
-                      fontWeight: pw.FontWeight.bold,
-                      letterSpacing: 3,
-                      color: PdfColors.brown800,
-                    ),
+              child: pw.Container(
+                width: 420,
+                height: 520,
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.brown800, width: 3),
+                ),
+                child: pw.Container(
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.brown400, width: 1),
                   ),
-                  pw.SizedBox(height: 8),
-                  pw.Text(
-                    'Catálogo numismático',
-                    style: pw.TextStyle(
-                      fontSize: 18,
-                      color: PdfColors.brown600,
-                      fontStyle: pw.FontStyle.italic,
-                    ),
+                  child: pw.Column(
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    children: [
+                      pw.SizedBox(height: 20),
+                      pw.Text(
+                        'CUBANUM',
+                        style: pw.TextStyle(
+                          fontSize: 36,
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 4,
+                          color: PdfColors.brown900,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Catálogo numismático',
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          color: PdfColors.brown600,
+                          fontStyle: pw.FontStyle.italic,
+                        ),
+                      ),
+                      pw.SizedBox(height: 40),
+
+                      // Moneda placeholder
+                      pw.Container(
+                        width: 200,
+                        height: 200,
+                        decoration: pw.BoxDecoration(
+                          color: PdfColors.amber200,
+                          shape: pw.BoxShape.circle,
+                          border: pw.Border.all(color: PdfColors.amber800, width: 5),
+                        ),
+                        child: pw.Center(
+                          child: pw.Container(
+                            width: 170,
+                            height: 170,
+                            decoration: pw.BoxDecoration(
+                              shape: pw.BoxShape.circle,
+                              border: pw.Border.all(color: PdfColors.amber700, width: 1.5),
+                            ),
+                            child: pw.Center(
+                              child: pw.Text(
+                                'CUBANUM',
+                                style: pw.TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColors.brown900,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 40),
+                      pw.Text(
+                        nombreColeccionista,
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.brown900,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        fechaTexto,
+                        style: const pw.TextStyle(
+                          fontSize: 12,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                      pw.SizedBox(height: 20),
+                      pw.Text(
+                        '${monedas.length} ${monedas.length == 1 ? "moneda" : "monedas"} en la colección',
+                        style: const pw.TextStyle(
+                          fontSize: 11,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                      pw.SizedBox(height: 20),
+                    ],
                   ),
-                  pw.SizedBox(height: 24),
-                  pw.Text(
-                    'Generado el $fechaGeneracion',
-                    style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-                  ),
-                  pw.SizedBox(height: 6),
-                  pw.Text(
-                    '${monedas.length} ${monedas.length == 1 ? 'moneda' : 'monedas'} en la colección',
-                    style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-                  ),
-                ],
+                ),
               ),
             ),
           );
-          widgets.add(pw.SizedBox(height: 40));
-          widgets.add(pw.Divider(color: PdfColors.brown300, thickness: 0.8));
+
           widgets.add(pw.NewPage());
 
-          for (var i = 0; i < monedas.length; i++) {
-            final m = monedas[i];
-            widgets.add(_bloqueMoneda(m, fotosAnverso, fotosReverso));
-            if (i < monedas.length - 1) {
-              widgets.add(pw.SizedBox(height: 12));
-              widgets.add(pw.Divider(color: PdfColors.grey400, thickness: 0.6));
-              widgets.add(pw.SizedBox(height: 12));
+          // ---------- MONEDAS O LISTADO ----------
+          if (conFotos) {
+            for (var i = 0; i < monedas.length; i++) {
+              widgets.add(
+                _bloqueMonedaConFotos(
+                  monedas[i],
+                  fotosAnverso,
+                  fotosReverso,
+                ),
+              );
+              if (i < monedas.length - 1) {
+                widgets.add(pw.SizedBox(height: 6));
+                widgets.add(pw.Divider(color: PdfColors.grey400, thickness: 0.5));
+                widgets.add(pw.SizedBox(height: 6));
+              }
+            }
+          } else {
+            // Listado compacto de 2 líneas por moneda
+            for (var i = 0; i < monedas.length; i++) {
+              widgets.add(_filaCompacta(monedas[i]));
             }
           }
+
+          // ---------- RESUMEN FINAL ----------
+          widgets.add(pw.NewPage());
+          widgets.add(_resumenFinal(monedas, nombreColeccionista, fechaTexto));
+
           return widgets;
         },
       ),
@@ -160,7 +253,9 @@ class ExportService {
     return archivo;
   }
 
-  static pw.Widget _bloqueMoneda(
+  // ---------- Bloque de moneda con fotos ----------
+
+  static pw.Widget _bloqueMonedaConFotos(
     Moneda m,
     Map<int, Uint8List?> fotosAnverso,
     Map<int, Uint8List?> fotosReverso,
@@ -172,162 +267,402 @@ class ExportService {
     final titulo = [
       if (m.pais.trim().isNotEmpty) m.pais.trim(),
       if (m.denominacion.trim().isNotEmpty) m.denominacion.trim(),
-    ].join(' · ');
-
-    final subtitulo = [
-      if (m.anio.trim().isNotEmpty) m.anio.trim(),
+      if (m.anio.trim().isNotEmpty)
+        (m.esHejira ? '${m.anio} AH' : m.anio),
       if (m.gradoSheldon.trim().isNotEmpty) m.gradoSheldon.trim(),
     ].join(' · ');
 
-    final filas = <pw.Widget>[];
-    void addFila(String etiqueta, String? valor) {
+    // Datos en 2 subcolumnas (etiqueta / valor)
+    final filas = <(String, String)>[];
+    void add(String etiqueta, String? valor) {
       final v = valor?.trim() ?? '';
       if (v.isEmpty) return;
-      filas.add(
-        pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.SizedBox(
-                width: 110,
-                child: pw.Text(
-                  etiqueta,
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.grey800,
+      filas.add((etiqueta, v));
+    }
+
+    add('País', m.pais);
+    add('Período', m.periodoAcunacion);
+    add('Año', m.anio.isEmpty ? '' : (m.esHejira ? '${m.anio} AH' : m.anio));
+    add('Ceca', m.ceca);
+    add('KM#', m.kmCatalogo);
+    add('Metal', m.metal);
+    add('Ley', m.ley);
+    if (m.pesoG != null) add('Peso', '${_numATexto(m.pesoG!)} g');
+    if (m.diametroMm != null) add('Diámetro', '${_numATexto(m.diametroMm!)} mm');
+    if (m.grosorMm != null) add('Grosor', '${_numATexto(m.grosorMm!)} mm');
+    add('Forma', m.forma);
+    add('Canto', m.canto);
+    add('Alineación', m.alineacion);
+    add('Resellada', m.resellada ? 'Sí' : 'No');
+    add('Grado', m.gradoSheldon);
+    add('Autenticidad', m.autenticidad);
+    if (m.precioCompra != null) {
+      add('Precio compra', '${_numATexto(m.precioCompra!)} ${m.monedaPrecio}');
+    }
+    if (m.precioVenta != null) {
+      add('Precio venta', '${_numATexto(m.precioVenta!)} ${m.monedaVenta}');
+    }
+    add('Ubicación', m.ubicacion);
+
+    // Dividir en 2 subcolumnas de datos
+    final mitad = (filas.length / 2).ceil();
+    final col1 = filas.take(mitad).toList();
+    final col2 = filas.skip(mitad).toList();
+
+    pw.Widget construirColumna(List<(String, String)> items) {
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: items.map((fila) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.symmetric(vertical: 1),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.SizedBox(
+                  width: 70,
+                  child: pw.Text(
+                    fila.$1,
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.grey800,
+                    ),
                   ),
                 ),
-              ),
-              pw.Expanded(
-                child: pw.Text(
-                  v,
-                  style: const pw.TextStyle(fontSize: 10, color: PdfColors.black),
+                pw.Expanded(
+                  child: pw.Text(
+                    fila.$2,
+                    style: const pw.TextStyle(fontSize: 8, color: PdfColors.black),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    // Fotos apiladas verticalmente
+    pw.Widget fotoWidget(Uint8List? bytes) {
+      if (bytes == null) {
+        return pw.Container(
+          width: 100,
+          height: 100,
+          decoration: pw.BoxDecoration(
+            color: PdfColors.grey300,
+            border: pw.Border.all(color: PdfColors.grey500, width: 0.5),
           ),
+          child: pw.Center(
+            child: pw.Text(
+              'Sin foto',
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+            ),
+          ),
+        );
+      }
+      return pw.Container(
+        width: 100,
+        height: 100,
+        child: pw.Image(
+          pw.MemoryImage(bytes),
+          fit: pw.BoxFit.cover,
         ),
       );
     }
 
-    addFila('País', m.pais);
-    addFila('Denominación', m.denominacion);
-    addFila('Período', m.periodoAcunacion);
-    addFila('Año', m.anio.isEmpty ? '' : (m.esHejira ? '${m.anio} AH' : m.anio));
-    addFila('Hégira', m.esHejira ? 'Sí' : 'No');
-    addFila('Ceca', m.ceca);
-    addFila('KM#', m.kmCatalogo);
-    addFila('Metal', m.metal);
-    addFila('ONU', m.perteneceOnu ? 'Sí' : 'No');
-    if (m.pesoG != null) addFila('Peso', '${_numATexto(m.pesoG!)} g');
-    if (m.diametroMm != null) addFila('Diámetro', '${_numATexto(m.diametroMm!)} mm');
-    if (m.grosorMm != null) addFila('Grosor', '${_numATexto(m.grosorMm!)} mm');
-    addFila('Forma', m.forma);
-    addFila('Ley', m.ley);
-    addFila('Canto', m.canto);
-    addFila('Alineación', m.alineacion);
-    addFila('Resellada', m.resellada ? 'Sí' : 'No');
-    addFila('Grado Sheldon', m.gradoSheldon);
-    addFila('Autenticidad', m.autenticidad);
-    addFila('Detalles visibles', m.detallesVisibles);
-
-    if (m.precioCompra != null) {
-      addFila('Precio compra', '${_numATexto(m.precioCompra!)} ${m.monedaPrecio}');
-    }
-    if (m.fechaCompra != null) {
-      addFila('Fecha compra', _fmtFecha.format(m.fechaCompra!));
-    }
-    addFila('Lugar compra', m.lugarCompra);
-    if (m.valorEstimado != null) {
-      addFila('Valor estimado', '${_numATexto(m.valorEstimado!)} ${m.monedaPrecio}');
-    }
-    if (m.precioVenta != null) {
-      addFila('Precio venta', '${_numATexto(m.precioVenta!)} ${m.monedaPrecio}');
-    }
-    if (m.fechaVenta != null) {
-      addFila('Fecha venta', _fmtFecha.format(m.fechaVenta!));
-    }
-    addFila('Ubicación', m.ubicacion);
-    addFila('Notas', m.notas);
-
-    final columnaFotos = pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        if (anverso != null)
-          pw.Container(
-            margin: const pw.EdgeInsets.only(bottom: 6),
-            child: pw.Image(
-              pw.MemoryImage(anverso),
-              width: 130,
-              height: 130,
-              fit: pw.BoxFit.cover,
-            ),
-          ),
-        if (reverso != null)
-          pw.Container(
-            child: pw.Image(
-              pw.MemoryImage(reverso),
-              width: 130,
-              height: 130,
-              fit: pw.BoxFit.cover,
-            ),
-          ),
-        if (anverso == null && reverso == null)
-          pw.Container(
-            width: 130,
-            height: 130,
-            decoration: pw.BoxDecoration(
-              color: PdfColors.grey300,
-              border: pw.Border.all(color: PdfColors.grey500, width: 0.5),
-            ),
-            child: pw.Center(
-              child: pw.Text(
-                'Sin foto',
-                style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
-              ),
-            ),
-          ),
-      ],
-    );
-
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
+        // Título
         pw.Text(
           titulo.isEmpty ? 'Sin identificar' : titulo,
           style: pw.TextStyle(
-            fontSize: 15,
+            fontSize: 12,
             fontWeight: pw.FontWeight.bold,
             color: PdfColors.brown800,
           ),
         ),
-        if (subtitulo.isNotEmpty) ...[
-          pw.SizedBox(height: 2),
-          pw.Text(
-            subtitulo,
-            style: pw.TextStyle(
-              fontSize: 10,
-              color: PdfColors.grey700,
-              fontStyle: pw.FontStyle.italic,
-            ),
-          ),
-        ],
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 4),
+        // Fotos + 2 columnas de datos
         pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            columnaFotos,
-            pw.SizedBox(width: 14),
-            pw.Expanded(child: pw.Column(children: filas)),
+            pw.Column(
+              children: [
+                fotoWidget(anverso),
+                pw.SizedBox(height: 3),
+                fotoWidget(reverso),
+              ],
+            ),
+            pw.SizedBox(width: 10),
+            pw.Expanded(
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(child: construirColumna(col1)),
+                  pw.SizedBox(width: 8),
+                  pw.Expanded(child: construirColumna(col2)),
+                ],
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 
-  // ---------------- Excel ----------------
+  // ---------- Fila compacta (sin fotos) ----------
+
+  static pw.Widget _filaCompacta(Moneda m) {
+    // Línea 1: País · Denominación · Año ... Grado
+    final linea1 = [
+      if (m.pais.trim().isNotEmpty) m.pais.trim(),
+      if (m.denominacion.trim().isNotEmpty) m.denominacion.trim(),
+      if (m.anio.trim().isNotEmpty)
+        (m.esHejira ? '${m.anio} AH' : m.anio),
+    ].join(' · ');
+
+    // Línea 2: Metal · KM · Ceca · Precio · Ubicación
+    final partes2 = <String>[];
+    if (m.metal.isNotEmpty) partes2.add(m.metal);
+    if (m.kmCatalogo.isNotEmpty) partes2.add('KM ${m.kmCatalogo}');
+    if (m.ceca.isNotEmpty) partes2.add(m.ceca);
+    if (m.precioCompra != null) {
+      partes2.add('${_numATexto(m.precioCompra!)} ${m.monedaPrecio}');
+    }
+    if (m.ubicacion.isNotEmpty) partes2.add(m.ubicacion);
+    final linea2 = partes2.join(' · ');
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+        ),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            children: [
+              pw.Expanded(
+                child: pw.Text(
+                  linea1.isEmpty ? 'Sin identificar' : linea1,
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.brown800,
+                  ),
+                ),
+              ),
+              if (m.gradoSheldon.isNotEmpty)
+                pw.Text(
+                  m.gradoSheldon,
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.grey800,
+                  ),
+                ),
+            ],
+          ),
+          if (linea2.isNotEmpty)
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(top: 1),
+              child: pw.Text(
+                linea2,
+                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Resumen final ----------
+
+  static pw.Widget _resumenFinal(
+    List<Moneda> monedas,
+    String nombreColeccionista,
+    String fechaTexto,
+  ) {
+    // Contadores
+    final porMetal = <String, int>{};
+    final porPais = <String, int>{};
+    int reselladas = 0;
+    int conmemorativas = 0;
+    int fao = 0;
+    int ah = 0;
+    int replicas = 0;
+    int falsificaciones = 0;
+
+    final invertido = <String, double>{'CUP': 0, 'USD': 0, 'EUR': 0};
+    final recuperado = <String, double>{'CUP': 0, 'USD': 0, 'EUR': 0};
+
+    for (final m in monedas) {
+      if (m.metal.isNotEmpty) {
+        porMetal[m.metal] = (porMetal[m.metal] ?? 0) + 1;
+      }
+      if (m.pais.isNotEmpty) {
+        porPais[m.pais] = (porPais[m.pais] ?? 0) + 1;
+      }
+      if (m.resellada) reselladas++;
+      if (m.conmemorativa) conmemorativas++;
+      if (m.fao) fao++;
+      if (m.esHejira) ah++;
+      if (m.autenticidad == 'Réplica moderna') replicas++;
+      if (m.autenticidad == 'Falsificación de época') falsificaciones++;
+
+      if (m.precioCompra != null && m.precioCompra! > 0) {
+        final k = _normalizarMoneda(m.monedaPrecio);
+        invertido[k] = (invertido[k] ?? 0) + m.precioCompra!;
+      }
+      if (m.precioVenta != null && m.precioVenta! > 0) {
+        final k = _normalizarMoneda(m.monedaVenta);
+        recuperado[k] = (recuperado[k] ?? 0) + m.precioVenta!;
+      }
+    }
+
+    // Ordenar metales y países por cantidad descendente
+    final metalesOrdenados = porMetal.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final paisesOrdenados = porPais.entries.toList()
+      ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
+
+    pw.Widget seccion(String titulo, List<(String, String)> items) {
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(height: 10),
+          pw.Text(
+            titulo,
+            style: pw.TextStyle(
+              fontSize: 12,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.brown800,
+            ),
+          ),
+          pw.SizedBox(height: 4),
+          ...items.map((fila) {
+            return pw.Padding(
+              padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
+              child: pw.Row(
+                children: [
+                  pw.Expanded(
+                    child: pw.Text(
+                      fila.$1,
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ),
+                  pw.Text(
+                    fila.$2,
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      );
+    }
+
+    String fmt(double v) {
+      if (v == 0) return '0';
+      if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+      return v.toStringAsFixed(2);
+    }
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'RESUMEN DE LA COLECCIÓN',
+          style: pw.TextStyle(
+            fontSize: 22,
+            fontWeight: pw.FontWeight.bold,
+            letterSpacing: 2,
+            color: PdfColors.brown900,
+          ),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          '$nombreColeccionista · $fechaTexto',
+          style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey700),
+        ),
+        pw.Divider(color: PdfColors.brown400, thickness: 1),
+        pw.SizedBox(height: 8),
+
+        // Total
+        pw.Row(
+          children: [
+            pw.Text(
+              'Total de monedas: ',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              '${monedas.length}',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.brown800,
+              ),
+            ),
+          ],
+        ),
+
+        // Metales
+        if (metalesOrdenados.isNotEmpty)
+          seccion(
+            'Por metal',
+            metalesOrdenados.map((e) => (e.key, '${e.value}')).toList(),
+          ),
+
+        // Países
+        if (paisesOrdenados.isNotEmpty)
+          seccion(
+            'Por país',
+            paisesOrdenados.map((e) => (e.key, '${e.value}')).toList(),
+          ),
+
+        // Características
+        seccion('Características especiales', [
+          ('Reselladas', '$reselladas'),
+          ('Conmemorativas', '$conmemorativas'),
+          ('FAO', '$fao'),
+          ('Hégira (AH)', '$ah'),
+          ('Réplicas modernas', '$replicas'),
+          ('Falsificaciones de época', '$falsificaciones'),
+        ]),
+
+        // Invertido
+        seccion('Dinero invertido (compras)', [
+          ('CUP', fmt(invertido['CUP'] ?? 0)),
+          ('USD', fmt(invertido['USD'] ?? 0)),
+          ('EUR', fmt(invertido['EUR'] ?? 0)),
+        ]),
+
+        // Recuperado
+        seccion('Dinero recuperado (ventas)', [
+          ('CUP', fmt(recuperado['CUP'] ?? 0)),
+          ('USD', fmt(recuperado['USD'] ?? 0)),
+          ('EUR', fmt(recuperado['EUR'] ?? 0)),
+        ]),
+      ],
+    );
+  }
+
+  static String _normalizarMoneda(String m) {
+    final u = m.trim().toUpperCase();
+    if (u == 'EUR' || u == 'USD' || u == 'CUP') return u;
+    return 'CUP';
+  }
+
+  // =====================================================================
+  // Excel (sin cambios respecto a la versión anterior)
+  // =====================================================================
 
   static Future<File> generarExcel(
     List<Moneda> monedas, {
@@ -345,17 +680,20 @@ class ExportService {
       ('ID', (m) => '${m.id ?? ''}', 'text'),
       ('País', (m) => m.pais, 'text'),
       ('Pertenece ONU', (m) => m.perteneceOnu ? 'Sí' : 'No', 'text'),
+      ('Conmemorativa', (m) => m.conmemorativa ? 'Sí' : 'No', 'text'),
+      ('FAO', (m) => m.fao ? 'Sí' : 'No', 'text'),
       ('Período', (m) => m.periodoAcunacion, 'text'),
       ('Denominación', (m) => m.denominacion, 'text'),
       ('Año', (m) => m.anio.isEmpty ? '' : (m.esHejira ? '${m.anio} AH' : m.anio), 'text'),
       ('Hégira', (m) => m.esHejira ? 'Sí' : 'No', 'text'),
       ('Ceca', (m) => m.ceca, 'text'),
       ('KM#', (m) => m.kmCatalogo, 'text'),
-      ('Metal', (m) => m.metal, 'text'),
+      ('Acuñadas', (m) => m.acunadas?.toString() ?? '', 'num'),
       ('Peso (g)', (m) => m.pesoG?.toString() ?? '', 'num'),
       ('Diámetro (mm)', (m) => m.diametroMm?.toString() ?? '', 'num'),
       ('Grosor (mm)', (m) => m.grosorMm?.toString() ?? '', 'num'),
       ('Forma', (m) => m.forma, 'text'),
+      ('Metal', (m) => m.metal, 'text'),
       ('Ley', (m) => m.ley, 'text'),
       ('Canto', (m) => m.canto, 'text'),
       ('Alineación', (m) => m.alineacion, 'text'),
@@ -368,13 +706,14 @@ class ExportService {
       ('Lugar compra', (m) => m.lugarCompra, 'text'),
       ('Fecha compra', (m) => m.fechaCompra?.toIso8601String() ?? '', 'date'),
       ('Valor estimado', (m) => m.valorEstimado?.toString() ?? '', 'num'),
+      ('Moneda estimado', (m) => m.valorEstimadoMoneda, 'text'),
       ('Precio venta', (m) => m.precioVenta?.toString() ?? '', 'num'),
+      ('Moneda venta', (m) => m.monedaVenta, 'text'),
       ('Fecha venta', (m) => m.fechaVenta?.toIso8601String() ?? '', 'date'),
       ('Ubicación', (m) => m.ubicacion, 'text'),
       ('Notas', (m) => m.notas, 'text'),
     ];
 
-    // Encabezados
     for (var c = 0; c < columnas.length; c++) {
       final rango = sheet.getRangeByIndex(1, c + 1);
       rango.setText(columnas[c].$1);
@@ -383,7 +722,6 @@ class ExportService {
       rango.cellStyle.fontColor = '#3B2F2F';
     }
 
-    // Datos
     for (var i = 0; i < monedas.length; i++) {
       final m = monedas[i];
       final fila = i + 2;
@@ -421,7 +759,7 @@ class ExportService {
       sheet.autoFitColumn(c + 1);
     }
 
-    final bytes = await workbook.save();
+    final bytes = workbook.save();
     workbook.dispose();
 
     final archivo = await _prepararDestino('xlsx', rutaDestino: rutaDestino);
