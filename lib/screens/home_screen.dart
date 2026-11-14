@@ -9,7 +9,6 @@ import '../widgets/moneda_card.dart';
 import 'ajustes_screen.dart';
 import 'detalle_screen.dart';
 import 'form_screen.dart';
-import 'referencias_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -159,14 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) await _cargarMonedas();
   }
 
-  Future<void> _abrirReferencias() async {
-    _busquedaFocus.unfocus();
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ReferenciasScreen()),
-    );
-  }
-
   Future<void> _abrirDialogoBackup() async {
     await showDialog<void>(
       context: context,
@@ -298,40 +289,29 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           title: const _TituloCubanum(),
           actions: [
-            IconButton(
-              icon: Icon(
-                Icons.save,
-                color: const Color(0xFFCF142B),
-                shadows: const [
-                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
-                ],
-              ),
-              tooltip: 'Copia de seguridad',
-              onPressed: _abrirDialogoBackup,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.menu_book_outlined,
-                color: theme.colorScheme.primary,
-                shadows: const [
-                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
-                ],
-              ),
-              tooltip: 'Referencias',
-              onPressed: _abrirReferencias,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.settings_outlined,
-                color: theme.colorScheme.primary,
-                shadows: const [
-                  Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
-                ],
-              ),
-              tooltip: 'Ajustes',
-              onPressed: _abrirAjustes,
-            ),
-          ],
+         IconButton(
+           icon: Icon(
+           Icons.save,
+            color: const Color(0xFFCF142B),
+             shadows: const [
+             Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+           ],
+          ),
+         tooltip: 'Copia de seguridad',
+         onPressed: _abrirDialogoBackup,
+       ),
+      IconButton(
+        icon: Icon(
+        Icons.handyman_outlined,
+        color: theme.colorScheme.primary,
+        shadows: const [
+        Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+      ],
+    ),
+    tooltip: 'Herramientas',
+    onPressed: _abrirAjustes,
+  ),
+],
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: _abrirFormulario,
