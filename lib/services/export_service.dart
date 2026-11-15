@@ -3,8 +3,6 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
@@ -51,7 +49,6 @@ class ExportService {
     final doc = pw.Document();
     final fechaTexto = fecha.isEmpty ? _fmtFecha.format(DateTime.now()) : fecha;
 
-    // Cargar fotos en memoria (solo si es catálogo visual)
     final fotosAnverso = <int, Uint8List?>{};
     final fotosReverso = <int, Uint8List?>{};
     if (conFotos) {
@@ -130,8 +127,6 @@ class ExportService {
                         ),
                       ),
                       pw.SizedBox(height: 40),
-
-                      // Moneda placeholder
                       pw.Container(
                         width: 200,
                         height: 200,
@@ -162,7 +157,6 @@ class ExportService {
                           ),
                         ),
                       ),
-
                       pw.SizedBox(height: 40),
                       pw.Text(
                         nombreColeccionista,
@@ -209,13 +203,14 @@ class ExportService {
                 ),
               );
               if (i < monedas.length - 1) {
-                widgets.add(pw.SizedBox(height: 6));
-                widgets.add(pw.Divider(color: PdfColors.grey400, thickness: 0.5));
+                widgets.add(pw.Container(
+                  canSpan: false,
+                  child: pw.Divider(color: PdfColors.grey400, thickness: 0.5),
+                ));
                 widgets.add(pw.SizedBox(height: 6));
               }
             }
           } else {
-            // Listado compacto de 2 líneas por moneda
             for (var i = 0; i < monedas.length; i++) {
               widgets.add(_filaCompacta(monedas[i]));
             }
@@ -230,7 +225,6 @@ class ExportService {
       ),
     );
 
-    // Guardar en bytes y abrir "Guardar como"
     final bytes = await doc.save();
 
     final ahora = DateTime.now();
@@ -267,7 +261,6 @@ class ExportService {
       if (m.gradoSheldon.trim().isNotEmpty) m.gradoSheldon.trim(),
     ].join(' · ');
 
-    // Datos en 2 subcolumnas (etiqueta / valor)
     final filas = <(String, String)>[];
     void add(String etiqueta, String? valor) {
       final v = valor?.trim() ?? '';
@@ -299,7 +292,6 @@ class ExportService {
     }
     add('Ubicación', m.ubicacion);
 
-    // Dividir en 2 subcolumnas de datos
     final mitad = (filas.length / 2).ceil();
     final col1 = filas.take(mitad).toList();
     final col2 = filas.skip(mitad).toList();
@@ -337,12 +329,11 @@ class ExportService {
       );
     }
 
-    // Fotos apiladas verticalmente
     pw.Widget fotoWidget(Uint8List? bytes) {
       if (bytes == null) {
         return pw.Container(
-          width: 100,
-          height: 100,
+          width: 85,
+          height: 85,
           decoration: pw.BoxDecoration(
             color: PdfColors.grey300,
             border: pw.Border.all(color: PdfColors.grey500, width: 0.5),
@@ -356,8 +347,8 @@ class ExportService {
         );
       }
       return pw.Container(
-        width: 100,
-        height: 100,
+        width: 85,
+        height: 85,
         child: pw.Image(
           pw.MemoryImage(bytes),
           fit: pw.BoxFit.cover,
@@ -365,51 +356,51 @@ class ExportService {
       );
     }
 
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        // Título
-        pw.Text(
-          titulo.isEmpty ? 'Sin identificar' : titulo,
-          style: pw.TextStyle(
-            fontSize: 12,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.brown800,
-          ),
-        ),
-        pw.SizedBox(height: 4),
-        // Fotos + 2 columnas de datos
-        pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Column(
-              children: [
-                fotoWidget(anverso),
-                pw.SizedBox(height: 3),
-                fotoWidget(reverso),
-              ],
+    return pw.Container(
+      canSpan: false,
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            titulo.isEmpty ? 'Sin identificar' : titulo,
+            style: pw.TextStyle(
+              fontSize: 12,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.brown800,
             ),
-            pw.SizedBox(width: 10),
-            pw.Expanded(
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
+          ),
+          pw.SizedBox(height: 4),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Column(
                 children: [
-                  pw.Expanded(child: construirColumna(col1)),
-                  pw.SizedBox(width: 8),
-                  pw.Expanded(child: construirColumna(col2)),
+                  fotoWidget(anverso),
+                  pw.SizedBox(height: 2),
+                  fotoWidget(reverso),
                 ],
               ),
-            ),
-          ],
-        ),
-      ],
+              pw.SizedBox(width: 10),
+              pw.Expanded(
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Expanded(child: construirColumna(col1)),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(child: construirColumna(col2)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   // ---------- Fila compacta (sin fotos) ----------
 
   static pw.Widget _filaCompacta(Moneda m) {
-    // Línea 1: País · Denominación · Año
     final linea1 = [
       if (m.pais.trim().isNotEmpty) m.pais.trim(),
       if (m.denominacion.trim().isNotEmpty) m.denominacion.trim(),
@@ -417,7 +408,6 @@ class ExportService {
         (m.esHejira ? '${m.anio} AH' : m.anio),
     ].join(' · ');
 
-    // Línea 2: Metal · KM · Ceca · Precio · Ubicación
     final partes2 = <String>[];
     if (m.metal.isNotEmpty) partes2.add(m.metal);
     if (m.kmCatalogo.isNotEmpty) partes2.add('KM ${m.kmCatalogo}');
@@ -429,6 +419,7 @@ class ExportService {
     final linea2 = partes2.join(' · ');
 
     return pw.Container(
+      canSpan: false,
       padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       decoration: const pw.BoxDecoration(
         border: pw.Border(
@@ -481,7 +472,6 @@ class ExportService {
     String nombreColeccionista,
     String fechaTexto,
   ) {
-    // Contadores
     final porMetal = <String, int>{};
     final porPais = <String, int>{};
     int reselladas = 0;
@@ -518,7 +508,6 @@ class ExportService {
       }
     }
 
-    // Ordenar metales por cantidad descendente y países alfabéticamente
     final metalesOrdenados = porMetal.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final paisesOrdenados = porPais.entries.toList()
@@ -589,8 +578,6 @@ class ExportService {
         ),
         pw.Divider(color: PdfColors.brown400, thickness: 1),
         pw.SizedBox(height: 8),
-
-        // Total
         pw.Row(
           children: [
             pw.Text(
@@ -607,22 +594,16 @@ class ExportService {
             ),
           ],
         ),
-
-        // Metales
         if (metalesOrdenados.isNotEmpty)
           seccion(
             'Por metal',
             metalesOrdenados.map((e) => (e.key, '${e.value}')).toList(),
           ),
-
-        // Países
         if (paisesOrdenados.isNotEmpty)
           seccion(
             'Por país',
             paisesOrdenados.map((e) => (e.key, '${e.value}')).toList(),
           ),
-
-        // Características
         seccion('Características especiales', [
           ('Reselladas', '$reselladas'),
           ('Conmemorativas', '$conmemorativas'),
@@ -631,15 +612,11 @@ class ExportService {
           ('Réplicas modernas', '$replicas'),
           ('Falsificaciones de época', '$falsificaciones'),
         ]),
-
-        // Invertido
         seccion('Dinero invertido (compras)', [
           ('CUP', fmt(invertido['CUP'] ?? 0)),
           ('USD', fmt(invertido['USD'] ?? 0)),
           ('EUR', fmt(invertido['EUR'] ?? 0)),
         ]),
-
-        // Recuperado
         seccion('Dinero recuperado (ventas)', [
           ('CUP', fmt(recuperado['CUP'] ?? 0)),
           ('USD', fmt(recuperado['USD'] ?? 0)),
