@@ -203,9 +203,10 @@ class ExportService {
                 ),
               );
               if (i < monedas.length - 1) {
-                widgets.add(pw.Container(
-                  canSpan: false,
-                  child: pw.Divider(color: PdfColors.grey400, thickness: 0.5),
+                widgets.add(pw.Wrap(
+                  children: [
+                    pw.Divider(color: PdfColors.grey400, thickness: 0.5),
+                  ],
                 ));
                 widgets.add(pw.SizedBox(height: 6));
               }
@@ -356,45 +357,46 @@ class ExportService {
       );
     }
 
-    return pw.Container(
-      canSpan: false,
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            titulo.isEmpty ? 'Sin identificar' : titulo,
-            style: pw.TextStyle(
-              fontSize: 12,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.brown800,
-            ),
-          ),
-          pw.SizedBox(height: 4),
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Column(
-                children: [
-                  fotoWidget(anverso),
-                  pw.SizedBox(height: 2),
-                  fotoWidget(reverso),
-                ],
+    return pw.Wrap(
+      children: [
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              titulo.isEmpty ? 'Sin identificar' : titulo,
+              style: pw.TextStyle(
+                fontSize: 12,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.brown800,
               ),
-              pw.SizedBox(width: 10),
-              pw.Expanded(
-                child: pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+            ),
+            pw.SizedBox(height: 4),
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Column(
                   children: [
-                    pw.Expanded(child: construirColumna(col1)),
-                    pw.SizedBox(width: 8),
-                    pw.Expanded(child: construirColumna(col2)),
+                    fotoWidget(anverso),
+                    pw.SizedBox(height: 2),
+                    fotoWidget(reverso),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Expanded(child: construirColumna(col1)),
+                      pw.SizedBox(width: 8),
+                      pw.Expanded(child: construirColumna(col2)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -418,50 +420,53 @@ class ExportService {
     if (m.ubicacion.isNotEmpty) partes2.add(m.ubicacion);
     final linea2 = partes2.join(' · ');
 
-    return pw.Container(
-      canSpan: false,
-      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(
-          bottom: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
-        ),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
+    return pw.Wrap(
+      children: [
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(
+              bottom: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+            ),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Expanded(
-                child: pw.Text(
-                  linea1.isEmpty ? 'Sin identificar' : linea1,
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.brown800,
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    child: pw.Text(
+                      linea1.isEmpty ? 'Sin identificar' : linea1,
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.brown800,
+                      ),
+                    ),
                   ),
-                ),
+                  if (m.gradoSheldon.isNotEmpty)
+                    pw.Text(
+                      m.gradoSheldon,
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontStyle: pw.FontStyle.italic,
+                        color: PdfColors.grey800,
+                      ),
+                    ),
+                ],
               ),
-              if (m.gradoSheldon.isNotEmpty)
-                pw.Text(
-                  m.gradoSheldon,
-                  style: pw.TextStyle(
-                    fontSize: 9,
-                    fontStyle: pw.FontStyle.italic,
-                    color: PdfColors.grey800,
+              if (linea2.isNotEmpty)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(top: 1),
+                  child: pw.Text(
+                    linea2,
+                    style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
                   ),
                 ),
             ],
           ),
-          if (linea2.isNotEmpty)
-            pw.Padding(
-              padding: const pw.EdgeInsets.only(top: 1),
-              child: pw.Text(
-                linea2,
-                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
