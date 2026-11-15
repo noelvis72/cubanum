@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -14,25 +15,6 @@ class ExportService {
   ExportService._();
 
   static final _fmtFecha = DateFormat('dd/MM/yyyy', 'es');
-  static final _fmtNombre = DateFormat('yyyy-MM-dd_HHmm');
-
-  static Future<File> _prepararDestino(
-    String extension, {
-    String? rutaDestino,
-  }) async {
-    if (rutaDestino != null) {
-      final f = File(rutaDestino);
-      await f.parent.create(recursive: true);
-      return f;
-    }
-    final dirDocs = await getApplicationDocumentsDirectory();
-    final dirExport = Directory(p.join(dirDocs.path, 'export'));
-    if (!await dirExport.exists()) {
-      await dirExport.create(recursive: true);
-    }
-    final nombre = 'cubanum_${_fmtNombre.format(DateTime.now())}.$extension';
-    return File(p.join(dirExport.path, nombre));
-  }
 
   static String _numATexto(double v) {
     if (v == v.roundToDouble()) return v.toStringAsFixed(0);
@@ -54,12 +36,13 @@ class ExportService {
   // PDF
   // =====================================================================
 
-  static Future<File> generarPdf(
+  /// Genera el PDF y abre el diálogo "Guardar como" de Android.
+  /// Devuelve true si el usuario guardó el archivo, false si canceló o falló.
+  static Future<bool> generarPdf(
     List<Moneda> monedas, {
     String nombreColeccionista = 'Coleccionista',
     String fecha = '',
     bool conFotos = true,
-    String? rutaDestino,
   }) async {
     if (monedas.isEmpty) {
       throw Exception('No hay monedas para exportar');
@@ -247,10 +230,22 @@ class ExportService {
       ),
     );
 
+    // Guardar en bytes y abrir "Guardar como"
     final bytes = await doc.save();
-    final archivo = await _prepararDestino('pdf', rutaDestino: rutaDestino);
-    await archivo.writeAsBytes(bytes, flush: true);
-    return archivo;
+
+    final ahora = DateTime.now();
+    final nombreArchivo =
+        'Cubanum_Catalogo_${ahora.year}${ahora.month.toString().padLeft(2, '0')}${ahora.day.toString().padLeft(2, '0')}_${ahora.hour.toString().padLeft(2, '0')}${ahora.minute.toString().padLeft(2, '0')}.pdf';
+
+    final uri = await FilePicker.platform.saveFile(
+      dialogTitle: 'Guardar catálogo PDF',
+      fileName: nombreArchivo,
+      bytes: Uint8List.fromList(bytes),
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    return uri != null;
   }
 
   // ---------- Bloque de moneda con fotos ----------
@@ -414,7 +409,7 @@ class ExportService {
   // ---------- Fila compacta (sin fotos) ----------
 
   static pw.Widget _filaCompacta(Moneda m) {
-    // Línea 1: País · Denominación · Año ... Grado
+    // Línea 1: País · Denominación · Año
     final linea1 = [
       if (m.pais.trim().isNotEmpty) m.pais.trim(),
       if (m.denominacion.trim().isNotEmpty) m.denominacion.trim(),
@@ -523,7 +518,7 @@ class ExportService {
       }
     }
 
-    // Ordenar metales y países por cantidad descendente
+    // Ordenar metales por cantidad descendente y países alfabéticamente
     final metalesOrdenados = porMetal.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final paisesOrdenados = porPais.entries.toList()
@@ -661,13 +656,12 @@ class ExportService {
   }
 
   // =====================================================================
-  // Excel (sin cambios respecto a la versión anterior)
+  // Excel
   // =====================================================================
 
-  static Future<File> generarExcel(
-    List<Moneda> monedas, {
-    String? rutaDestino,
-  }) async {
+  /// Genera el Excel y abre el diálogo "Guardar como" de Android.
+  /// Devuelve true si el usuario guardó el archivo, false si canceló o falló.
+  static Future<bool> generarExcel(List<Moneda> monedas) async {
     if (monedas.isEmpty) {
       throw Exception('No hay monedas para exportar');
     }
@@ -760,10 +754,20 @@ class ExportService {
     }
 
     final bytes = await workbook.save();
-     workbook.dispose();
+    workbook.dispose();
 
-final archivo = await _prepararDestino('xlsx', rutaDestino: rutaDestino);
-await archivo.writeAsBytes(bytes, flush: true);
-return archivo;
+    final ahora = DateTime.now();
+    final nombreArchivo =
+        'Cubanum_Catalogo_${ahora.year}${ahora.month.toString().padLeft(2, '0')}${ahora.day.toString().padLeft(2, '0')}_${ahora.hour.toString().padLeft(2, '0')}${ahora.minute.toString().padLeft(2, '0')}.xlsx';
+
+    final uri = await FilePicker.platform.saveFile(
+      dialogTitle: 'Guardar catálogo Excel',
+      fileName: nombreArchivo,
+      bytes: Uint8List.fromList(bytes),
+      type: FileType.custom,
+      allowedExtensions: ['xlsx'],
+    );
+
+    return uri != null;
   }
 }
