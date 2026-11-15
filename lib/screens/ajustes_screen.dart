@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'estadisticas_screen.dart';
@@ -65,78 +64,88 @@ class _AjustesScreenState extends State<AjustesScreen> {
   Future<void> _exportarPdf() async {
   if (_exportando) return;
 
-  // Prellenar el nombre con el último usado
   final prefs = await SharedPreferences.getInstance();
   final nombreGuardado = prefs.getString('cubanum_nombre_coleccionista') ?? '';
   final nombreCtrl = TextEditingController(text: nombreGuardado);
   final fechaCtrl = TextEditingController(
     text: DateFormat('dd/MM/yyyy').format(DateTime.now()),
   );
+  int paso = 0;
   bool conFotos = true;
 
   final resultado = await showDialog<bool>(
     context: context,
     builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setDialogState) => AlertDialog(
-        title: const Text('Exportar catálogo a PDF'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: nombreCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Coleccionista',
-                  hintText: 'Nombre y apellidos',
-                  prefixIcon: Icon(Icons.person_outline),
+      builder: (ctx, setDialogState) {
+        return AlertDialog(
+          title: Text(paso == 0 ? 'Datos del catálogo' : 'Modo de exportación'),
+          content: paso == 0
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nombreCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Coleccionista',
+                        hintText: 'Nombre y apellidos',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: fechaCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Fecha',
+                        hintText: 'dd/mm/aaaa',
+                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RadioListTile<bool>(
+                      contentPadding: EdgeInsets.zero,
+                      value: true,
+                      groupValue: conFotos,
+                      onChanged: (v) => setDialogState(() => conFotos = v ?? true),
+                      title: const Text('Catálogo visual (con fotos)'),
+                      subtitle: const Text('~3 monedas por página'),
+                    ),
+                    RadioListTile<bool>(
+                      contentPadding: EdgeInsets.zero,
+                      value: false,
+                      groupValue: conFotos,
+                      onChanged: (v) => setDialogState(() => conFotos = v ?? true),
+                      title: const Text('Listado compacto (sin fotos)'),
+                      subtitle: const Text('~20 monedas por página'),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: fechaCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Fecha',
-                  hintText: 'dd/mm/aaaa',
-                  prefixIcon: Icon(Icons.calendar_today_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Modo de exportación',
-                style: Theme.of(ctx).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 6),
-              RadioListTile<bool>(
-                contentPadding: EdgeInsets.zero,
-                value: true,
-                groupValue: conFotos,
-                onChanged: (v) => setDialogState(() => conFotos = v ?? true),
-                title: const Text('Catálogo visual (con fotos)'),
-                subtitle: const Text('~3 monedas por página'),
-              ),
-              RadioListTile<bool>(
-                contentPadding: EdgeInsets.zero,
-                value: false,
-                groupValue: conFotos,
-                onChanged: (v) => setDialogState(() => conFotos = v ?? true),
-                title: const Text('Listado compacto (sin fotos)'),
-                subtitle: const Text('~20 monedas por página'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Exportar'),
-          ),
-        ],
-      ),
+          actions: paso == 0
+              ? [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => setDialogState(() => paso = 1),
+                    child: const Text('Siguiente'),
+                  ),
+                ]
+              : [
+                  TextButton(
+                    onPressed: () => setDialogState(() => paso = 0),
+                    child: const Text('Atrás'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Exportar'),
+                  ),
+                ],
+        );
+      },
     ),
   );
 
@@ -147,7 +156,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
   if (resultado != true || !mounted) return;
 
-  // Guardar el nombre para la próxima vez
   if (nombre.isNotEmpty) {
     await prefs.setString('cubanum_nombre_coleccionista', nombre);
   }
@@ -162,21 +170,15 @@ class _AjustesScreenState extends State<AjustesScreen> {
       );
       return;
     }
-    final archivo = await ExportService.generarPdf(
+    final ok = await ExportService.generarPdf(
       monedas,
       nombreColeccionista: nombre.isEmpty ? 'Coleccionista' : nombre,
       fecha: fecha.isEmpty ? DateFormat('dd/MM/yyyy').format(DateTime.now()) : fecha,
       conFotos: conFotos,
     );
     if (!mounted) return;
-    final bytes = await archivo.readAsBytes();
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: p.basename(archivo.path),
-    );
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('PDF generado: ${p.basename(archivo.path)}')),
+      SnackBar(content: Text(ok ? 'PDF guardado' : 'Exportación cancelada')),
     );
   } catch (e) {
     if (!mounted) return;
@@ -189,37 +191,32 @@ class _AjustesScreenState extends State<AjustesScreen> {
 }
 
   Future<void> _exportarExcel() async {
-    if (_exportando) return;
-    setState(() => _exportando = true);
-    try {
-      final monedas = await _db.obtenerTodas();
-      if (monedas.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No hay monedas que exportar')),
-        );
-        return;
-      }
-      final archivo = await ExportService.generarExcel(monedas);
-      if (!mounted) return;
-      await Share.shareXFiles(
-        [XFile(archivo.path)],
-        text: 'Catálogo CUBANUM',
-      );
+  if (_exportando) return;
+  setState(() => _exportando = true);
+  try {
+    final monedas = await _db.obtenerTodas();
+    if (monedas.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Excel generado: ${p.basename(archivo.path)}')),
+        const SnackBar(content: Text('No hay monedas que exportar')),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al exportar Excel: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _exportando = false);
+      return;
     }
+    final ok = await ExportService.generarExcel(monedas);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'Excel guardado' : 'Exportación cancelada')),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al exportar Excel: $e')),
+    );
+  } finally {
+    if (mounted) setState(() => _exportando = false);
   }
-
+}
+  
     Future<void> _crearBackup() async {
     if (_creandoBackup) return;
     setState(() => _creandoBackup = true);
