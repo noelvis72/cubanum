@@ -2,15 +2,9 @@ import 'package:flutter/material.dart';
 
 /// Bottom sheet reutilizable para seleccionar múltiples opciones de una lista.
 ///
-/// Uso típico para chips de País, Metal, Forma, Moneda de compra y
-/// Autenticidad. Muestra:
-///  - Barra de búsqueda interna (opcional, se oculta si [mostrarBuscador]
-///    es false).
-///  - Lista de opciones con casillas y contadores.
-///  - Botones "Todos", "Ninguno", "Cancelar" y "Aplicar" fijos abajo.
-///
-/// Devuelve la lista de opciones seleccionadas al pulsar "Aplicar", o null
-/// si el usuario cancela.
+/// Cabecera con checkbox "marcar/desmarcar todos" estilo Gmail (tristate).
+/// Cuerpo con la lista de opciones y sus contadores.
+/// Pie con solo "Cancelar" y "Aplicar".
 Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
   required BuildContext context,
   required String titulo,
@@ -37,6 +31,36 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                   e.key.toLowerCase().contains(filtro.toLowerCase()))
               .toList();
 
+          // Estado del checkbox de cabecera
+          final totalVisibles = opcionesFiltradas.length;
+          final marcadosVisibles = opcionesFiltradas
+              .where((e) => seleccionados.contains(e.key))
+              .length;
+          bool? estadoCheckbox;
+          if (marcadosVisibles == 0) {
+            estadoCheckbox = false;
+          } else if (marcadosVisibles == totalVisibles) {
+            estadoCheckbox = true;
+          } else {
+            estadoCheckbox = null; // indeterminado
+          }
+
+          void toggleTodos() {
+            setSheetState(() {
+              if (estadoCheckbox == true) {
+                // Desmarcar todos los visibles
+                for (final op in opcionesFiltradas) {
+                  seleccionados.remove(op.key);
+                }
+              } else {
+                // Marcar todos los visibles
+                for (final op in opcionesFiltradas) {
+                  seleccionados.add(op.key);
+                }
+              }
+            });
+          }
+
           return Container(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(ctx).size.height * 0.75,
@@ -60,11 +84,16 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                     ),
                   ),
                 ),
-                // Título
+                // Cabecera: checkbox + título
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(8, 4, 16, 8),
                   child: Row(
                     children: [
+                      Checkbox(
+                        tristate: true,
+                        value: estadoCheckbox,
+                        onChanged: (_) => toggleTodos(),
+                      ),
                       Expanded(
                         child: Text(titulo, style: theme.textTheme.titleLarge),
                       ),
@@ -138,28 +167,12 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                         ),
                 ),
                 const Divider(height: 1),
-                // Botones
+                // Pie: solo Cancelar y Aplicar
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(
-                        onPressed: () {
-                          setSheetState(() {
-                            seleccionados
-                              ..clear()
-                              ..addAll(opciones.map((e) => e.key));
-                          });
-                        },
-                        child: const Text('Todos'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setSheetState(() => seleccionados.clear());
-                        },
-                        child: const Text('Ninguno'),
-                      ),
-                      const Spacer(),
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, null),
                         child: const Text('Cancelar'),
@@ -187,10 +200,6 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
 }
 
 /// Bottom sheet para el chip "Año" (rango numérico).
-///
-/// Muestra dos campos numéricos: Desde y Hasta. Ambos son opcionales; si uno
-/// queda vacío, se interpreta como "sin límite" en ese lado.
-/// Devuelve una tupla (desde, hasta) o null si el usuario cancela.
 Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
   required BuildContext context,
   required int? desdeInicial,
@@ -290,8 +299,8 @@ Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Spacer(),
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, null),
                           child: const Text('Cancelar'),
@@ -306,7 +315,6 @@ Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
                                 ? null
                                 : int.tryParse(hastaCtrl.text.trim());
 
-                            // Validación
                             if (desdeCtrl.text.trim().isNotEmpty && d == null) {
                               setSheetState(() => error = 'Año "Desde" inválido');
                               return;
