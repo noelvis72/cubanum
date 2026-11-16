@@ -187,7 +187,6 @@ class DatabaseHelper {
         )
       ''');
 
-      // Migrar monedas ya vendidas a la tabla ventas
       final vendidas = await db.query(
         tablaMonedas,
         where: 'precio_venta IS NOT NULL',
@@ -229,7 +228,6 @@ class DatabaseHelper {
     }
     final db = await database;
 
-    // Eliminar la venta anterior (si la había)
     await db.delete(tablaVentas, where: 'id_moneda = ?', whereArgs: [moneda.id]);
 
     final filas = await db.update(
@@ -239,7 +237,6 @@ class DatabaseHelper {
       whereArgs: [moneda.id],
     );
 
-    // Registrar nueva venta si aplica
     if (moneda.precioVenta != null) {
       await db.insert(tablaVentas, {
         'id_moneda': moneda.id,
@@ -255,7 +252,6 @@ class DatabaseHelper {
 
   Future<int> eliminar(int id) async {
     final db = await database;
-    // NO se borra la venta: el histórico permanece
     return db.delete(tablaMonedas, where: 'id = ?', whereArgs: [id]);
   }
 
@@ -358,11 +354,8 @@ class DatabaseHelper {
   Future<void> vaciar() async {
     final db = await database;
     await db.delete(tablaMonedas);
-    // NO se borran las ventas: histórico permanente
   }
 
-  /// Elimina todas las monedas vendidas y sus fotos.
-  /// NO borra la tabla ventas.
   Future<int> eliminarVendidas() async {
     final db = await database;
     final rows = await db.query(
@@ -395,7 +388,6 @@ class DatabaseHelper {
     return db.query(tablaVentas, orderBy: 'fecha_venta DESC');
   }
 
-  /// Suma los precios de venta agrupados por moneda (CUP, USD, EUR).
   Future<Map<String, double>> totalRecuperadoPorMoneda() async {
     final db = await database;
     final rows = await db.rawQuery('''
@@ -470,6 +462,208 @@ class DatabaseHelper {
   Future<int> eliminarCantoPersonalizado(String nombre) async {
     final db = await database;
     return db.delete(tablaCantos, where: 'nombre = ?', whereArgs: [nombre]);
+  }
+
+  // =====================================================================
+  // FASE 1 - FILTROS: nuevos métodos
+  // =====================================================================
+
+  /// Devuelve los países presentes en la colección con su contador,
+  /// ordenados alfabéticamente.
+  Future<List<MapEntry<String, int>>> obtenerPaisesConMonedas() async {
+    final db = await database;
+    final rows = await db.rawQuery('''
+      SELECT pais, COUNT(*) AS total
+      FROM $tablaMonedas
+      WHERE pais != ''
+      GROUP BY pais
+      ORDER BY pais COLLATE NOCASE ASC
+    ''');
+    return rows
+        .map((r) => MapEntry(
+              (r['pais'] as String?) ?? '',
+              (r['total'] as int?) ?? 0,
+            ))
+        .where((e) => e.key.isNotEmpty)
+        .toList();
+  }
+
+  /// Devuelve los metales presentes en la colección con su contador,
+  /// ordenados alfabéticamente.
+  Future<List<MapEntry<String, int>>> obtenerMetalesConMonedas() async {
+    final db = await database;
+    final rows = await db.rawQuery('''
+      SELECT metal, COUNT(*) AS total
+      FROM $tablaMonedas
+      WHERE metal != ''
+      GROUP BY metal
+      ORDER BY metal COLLATE NOCASE ASC
+    ''');
+    return rows
+        .map((r) => MapEntry(
+              (r['metal'] as String?) ?? '',
+              (r['total'] as int?) ?? 0,
+            ))
+        .where((e) => e.key.isNotEmpty)
+        .toList();
+  }
+
+  /// Devuelve las formas presentes en la colección con su contador,
+  /// ordenadas alfabéticamente.
+  Future<List<MapEntry<String, int>>> obtenerFormasConMonedas() async {
+    final db = await database;
+    final rows = await db.rawQuery('''
+      SELECT forma, COUNT(*) AS total
+      FROM $tablaMonedas
+      WHERE forma != ''
+      GROUP BY forma
+      ORDER BY forma COLLATE NOCASE ASC
+    ''');
+    return rows
+        .map((r) => MapEntry(
+              (r['forma'] as String?) ?? '',
+              (r['total'] as int?) ?? 0,
+            ))
+        .where((e) => e.key.isNotEmpty)
+        .toList();
+  }
+
+  /// Búsqueda combinada con filtros de chips + texto libre.
+  ///
+  /// Todos los filtros son opcionales. Si un filtro es null o vacío,
+  /// no se aplica. Los filtros se combinan con AND.
+  ///
+  /// El texto libre busca en los mismos campos que [buscar] y mantiene
+  /// las palabras clave especiales (fao, ah, vendida, resellada,
+  /// conmemorativa).
+  ///
+  /// El rango de años solo aplica a monedas con `anio` puramente numérico.
+  /// Las monedas con `c. 1890`, `1902-1915`, etc. quedan excluidas del filtro
+  /// de rango.
+  Future<List<Moneda>> obtenerMonedasConFiltros({
+    String? texto,
+    List<String>? paises,
+    List<String>? metales,
+    List<String>? formas,
+    List<String>? monedasCompra,
+    List<String>? autenticidades,
+    int? anioDesde,
+    int? anioHasta,
+  }) async {
+    final db = await database;
+    final condiciones = <String>[];
+    final args = <Object?>[];
+
+    // ---------- Filtro de texto libre ----------
+    final q = (texto ?? '').trim();
+    if (q.isNotEmpty) {
+      final like = '%$q%';
+      final qLower = q.toLowerCase();
+
+      final quiereConmemorativa = qLower == 'conmemorativa' ||
+          qLower == 'conmemorativas' ||
+          qLower == 'conmemorativo';
+      final quiereFao = qLower == 'fao';
+      final quiereAh = qLower == 'ah' ||
+          qLower == 'hegira' ||
+          qLower == 'hégira' ||
+          qLower == 'hejira' ||
+          qLower == 'islamica' ||
+          qLower == 'islámica';
+      final quiereVendidas = qLower == 'vendida' ||
+          qLower == 'vendidas' ||
+          qLower == 'vendido' ||
+          qLower == 'vendidos';
+      final quiereReselladas = qLower == 'resellada' ||
+          qLower == 'reselladas' ||
+          qLower == 'resellado' ||
+          qLower == 'resellados';
+
+      final camposTexto = <String>[
+        'pais           LIKE ?',
+        'denominacion   LIKE ?',
+        'anio           LIKE ?',
+        'km_catalogo    LIKE ?',
+        'ceca           LIKE ?',
+        'metal          LIKE ?',
+        'grado_sheldon  LIKE ?',
+        'periodo_acunacion LIKE ?',
+        'forma          LIKE ?',
+        'canto          LIKE ?',
+        'autenticidad   LIKE ?',
+        'lugar_compra   LIKE ?',
+        'ubicacion      LIKE ?',
+      ];
+      for (var i = 0; i < camposTexto.length; i++) {
+        args.add(like);
+      }
+      if (quiereConmemorativa) camposTexto.add('conmemorativa = 1');
+      if (quiereFao) camposTexto.add('fao = 1');
+      if (quiereAh) camposTexto.add('es_hejira = 1');
+      if (quiereVendidas) camposTexto.add('precio_venta IS NOT NULL');
+      if (quiereReselladas) camposTexto.add('resellada = 1');
+
+      condiciones.add('(${camposTexto.join(' OR ')})');
+    }
+
+    // ---------- Filtro de países ----------
+    if (paises != null && paises.isNotEmpty) {
+      final placeholders = List.filled(paises.length, '?').join(', ');
+      condiciones.add('pais IN ($placeholders)');
+      args.addAll(paises);
+    }
+
+    // ---------- Filtro de metales ----------
+    if (metales != null && metales.isNotEmpty) {
+      final placeholders = List.filled(metales.length, '?').join(', ');
+      condiciones.add('metal IN ($placeholders)');
+      args.addAll(metales);
+    }
+
+    // ---------- Filtro de formas ----------
+    if (formas != null && formas.isNotEmpty) {
+      final placeholders = List.filled(formas.length, '?').join(', ');
+      condiciones.add('forma IN ($placeholders)');
+      args.addAll(formas);
+    }
+
+    // ---------- Filtro de moneda de compra ----------
+    if (monedasCompra != null && monedasCompra.isNotEmpty) {
+      final placeholders = List.filled(monedasCompra.length, '?').join(', ');
+      condiciones.add('moneda_precio IN ($placeholders)');
+      args.addAll(monedasCompra);
+    }
+
+    // ---------- Filtro de autenticidades ----------
+    if (autenticidades != null && autenticidades.isNotEmpty) {
+      final placeholders = List.filled(autenticidades.length, '?').join(', ');
+      condiciones.add('autenticidad IN ($placeholders)');
+      args.addAll(autenticidades);
+    }
+
+    // ---------- Filtro de rango de años ----------
+    if (anioDesde != null || anioHasta != null) {
+      // Solo años numéricos puros (excluye "c. 1890", "1902-1915", etc.)
+      condiciones.add("anio GLOB '[0-9]*'");
+      if (anioDesde != null) {
+        condiciones.add('CAST(anio AS INTEGER) >= ?');
+        args.add(anioDesde);
+      }
+      if (anioHasta != null) {
+        condiciones.add('CAST(anio AS INTEGER) <= ?');
+        args.add(anioHasta);
+      }
+    }
+
+    final whereClause = condiciones.isEmpty ? null : condiciones.join(' AND ');
+
+    final rows = await db.query(
+      tablaMonedas,
+      where: whereClause,
+      whereArgs: args.isEmpty ? null : args,
+      orderBy: 'pais COLLATE NOCASE ASC, anio ASC, denominacion COLLATE NOCASE ASC',
+    );
+    return rows.map(Moneda.fromMap).toList();
   }
 
   // ---------------- Utilidades ----------------
