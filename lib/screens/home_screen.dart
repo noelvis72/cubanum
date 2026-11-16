@@ -778,10 +778,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.filter_alt_off),
-            tooltip: 'Limpiar filtros',
-            onPressed: _limpiarFiltros,
+                    Material(
+            color: theme.colorScheme.primary.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: _limpiarFiltros,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.filter_alt_off,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Limpiar',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -1053,13 +1077,11 @@ class _TituloCubanum extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFE0E8F5),
-                  Color(0xFFFFFFFF),
-                  Color(0xFFFFFFFF),
-                  Color(0xFFFFE0E0),
-                  Color(0xFFF5C6C6),
+                  Color(0xFFCF142B), // rojo bandera cubana
+                  Color(0xFFFFFFFF), // blanco centro
+                  Color(0xFFCF142B), // rojo bandera cubana
                 ],
-                stops: [0.0, 0.2, 0.5, 0.8, 1.0],
+                stops: [0.0, 0.5, 1.0],
               ).createShader(bounds),
               child: Text(
                 'CUBANUM',
