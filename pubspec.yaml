@@ -36,7 +36,7 @@ dependencies:
   share_plus: ^10.1.4
 
   # Utilidades
-  intl: any                         # <-- CAMBIO: deja que flutter_localizations decida
+  intl: any                         # <-- CAMBIO: deja que flutter_localizations decida cual usar
   provider: ^6.1.2
   google_fonts: ^6.2.1
 
