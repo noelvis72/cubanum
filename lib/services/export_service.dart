@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/services.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -29,7 +30,14 @@ class ExportService {
       return null;
     }
   }
-
+  static Future<Uint8List?> _leerIconoAsset() async {
+    try {
+      final data = await rootBundle.load('assets/icon/icon.png');
+      return data.buffer.asUint8List();
+    } catch (_) {
+      return null;
+    }
+  }
   // =====================================================================
   // PDF
   // =====================================================================
@@ -48,7 +56,8 @@ class ExportService {
 
     final doc = pw.Document();
     final fechaTexto = fecha.isEmpty ? _fmtFecha.format(DateTime.now()) : fecha;
-
+    final iconoBytes = await _leerIconoAsset();
+    
     final fotosAnverso = <int, Uint8List?>{};
     final fotosReverso = <int, Uint8List?>{};
     if (conFotos) {
@@ -127,36 +136,36 @@ class ExportService {
                         ),
                       ),
                       pw.SizedBox(height: 40),
-                      pw.Container(
-                        width: 200,
-                        height: 200,
-                        decoration: pw.BoxDecoration(
-                          color: PdfColors.amber200,
-                          shape: pw.BoxShape.circle,
-                          border: pw.Border.all(color: PdfColors.amber800, width: 5),
-                        ),
-                        child: pw.Center(
-                          child: pw.Container(
-                            width: 170,
-                            height: 170,
-                            decoration: pw.BoxDecoration(
-                              shape: pw.BoxShape.circle,
-                              border: pw.Border.all(color: PdfColors.amber700, width: 1.5),
-                            ),
-                            child: pw.Center(
-                              child: pw.Text(
-                                'CUBANUM',
-                                style: pw.TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: PdfColors.brown900,
-                                  letterSpacing: 2,
-                                ),
+                      if (iconoBytes != null)
+                        pw.Container(
+                          width: 200,
+                          height: 200,
+                          child: pw.Image(
+                            pw.MemoryImage(iconoBytes),
+                            fit: pw.BoxFit.contain,
+                          ),
+                        )
+                      else
+                        pw.Container(
+                          width: 200,
+                          height: 200,
+                          decoration: pw.BoxDecoration(
+                            color: PdfColors.amber200,
+                            shape: pw.BoxShape.circle,
+                            border: pw.Border.all(color: PdfColors.amber800, width: 5),
+                          ),
+                          child: pw.Center(
+                            child: pw.Text(
+                              'CUBANUM',
+                              style: pw.TextStyle(
+                                fontSize: 22,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.brown900,
+                                letterSpacing: 2,
                               ),
                             ),
                           ),
                         ),
-                      ),
                       pw.SizedBox(height: 40),
                       pw.Text(
                         nombreColeccionista,
