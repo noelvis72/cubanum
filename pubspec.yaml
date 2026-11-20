@@ -1,7 +1,7 @@
 name: cubanum
 description: CUBANUM - Control numismático personal
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -13,13 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  camera: ^0.11.0
-  misri_hijri: ^0.1.7
-  hijri_plus: ^0.1.0
-  flutter_expandable_table: ^2.0.1
-  archive: ^4.6.0
-  file_picker: 10.3.8
-  
+
   # Almacenamiento local
   sqflite: ^2.3.3
   path: ^1.9.0
@@ -34,9 +28,14 @@ dependencies:
   printing: ^5.13.1
   syncfusion_flutter_xlsio: ^35.0.0
   share_plus: ^10.1.4
+  archive: ^4.6.0
+  file_picker: 10.3.8
+  misri_hijri: ^0.1.7
+  hijri_plus: ^0.1.0
+  flutter_expandable_table: ^2.3.0
 
   # Utilidades
-  intl: any                         # <-- CAMBIO: deja que flutter_localizations decida cual usar
+  intl: any
   provider: ^6.1.2
   google_fonts: ^6.2.1
 
@@ -44,6 +43,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#002A8F"
+  adaptive_icon_foreground: "assets/icon/icon.png"
+  adaptive_icon_foreground_inset: 0
 
 flutter:
   uses-material-design: true
