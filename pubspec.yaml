@@ -52,7 +52,7 @@ flutter_launcher_icons:
   image_path: "assets/icon/icon.png"
   adaptive_icon_background: "#002A8F"
   adaptive_icon_foreground: "assets/icon/icon.png"
-  adaptive_icon_foreground_inset: 0
+  adaptive_icon_foreground_inset: 20
 
 flutter:
   uses-material-design: true
