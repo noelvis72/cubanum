@@ -1088,13 +1088,6 @@ class _TituloCubanum extends StatelessWidget {
                 style: baseStyle.copyWith(color: Colors.white),
               ),
             ),
-            Positioned(
-              left: 7,
-              top: (32 - 10) / 2,
-              child: const IgnorePointer(
-                child: Icon(Icons.star, size: 10, color: Colors.white),
-              ),
-            ),
           ],
         ),
       ),
