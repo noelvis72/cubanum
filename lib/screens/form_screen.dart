@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../db/database_helper.dart';
 import '../models/moneda.dart';
+import '../widgets/bottom_sheet_filtro.dart';
 import 'camara_screen.dart';
 
 class FormScreen extends StatefulWidget {
@@ -35,6 +36,8 @@ class _FormScreenState extends State<FormScreen> {
   late final TextEditingController _diametroCtrl;
   late final TextEditingController _grosorCtrl;
   late final TextEditingController _leyCtrl;
+  late final TextEditingController _notasVarianteCtrl;
+  late final TextEditingController _notasReselloCtrl;
   late final TextEditingController _detallesCtrl;
   late final TextEditingController _precioCompraCtrl;
   late final TextEditingController _lugarCompraCtrl;
@@ -48,10 +51,14 @@ class _FormScreenState extends State<FormScreen> {
   bool _fao = false;
   bool _esHejira = false;
   bool _resellada = false;
+  bool _contramarcada = false;
+  bool _variante = false;
+
   String? _paisSeleccionado;
   String? _formaSeleccionada;
   String? _metalSeleccionado;
   String? _cantoSeleccionado;
+  String? _acabadoSeleccionado;
   String? _alineacionSeleccionada;
   String? _gradoSheldon;
   String _autenticidad = 'Original';
@@ -72,14 +79,19 @@ class _FormScreenState extends State<FormScreen> {
   List<String> _paisesPersonalizados = [];
   List<String> _metalesPersonalizados = [];
   List<String> _cantosPersonalizados = [];
+  List<String> _acabadosPersonalizados = [];
 
   static const _formas = <String>[
     'Redonda', 'Triangular', 'Cuadrada', 'Ovalada', 'Rectangular', 'Múltiples lados',
   ];
 
   static const _cantos = <String>[
-    'Liso', 'Estriado', 'Serrado', 'Epigráfico con leyenda',
+    'Liso', 'Estriado', 'Serrado', 'Epígrafe con leyenda',
     'Estriado interrumpido', 'Reticulado', 'Acanalado', 'En espiguilla',
+  ];
+
+  static const _acabados = <String>[
+    'Proof', 'Proof Mate', 'Bullion', 'Acabado Satinado',
   ];
 
   static const _alineaciones = <String>['Medalla', 'Moneda'];
@@ -178,6 +190,8 @@ class _FormScreenState extends State<FormScreen> {
     _diametroCtrl      = TextEditingController(text: _numATexto(m?.diametroMm));
     _grosorCtrl        = TextEditingController(text: _numATexto(m?.grosorMm));
     _leyCtrl           = TextEditingController(text: m?.ley ?? '');
+    _notasVarianteCtrl = TextEditingController(text: m?.notasVariante ?? '');
+    _notasReselloCtrl  = TextEditingController(text: m?.notasReselloContramarca ?? '');
     _detallesCtrl      = TextEditingController(text: m?.detallesVisibles ?? '');
     _precioCompraCtrl  = TextEditingController(text: _numATexto(m?.precioCompra));
     _lugarCompraCtrl   = TextEditingController(text: m?.lugarCompra ?? '');
@@ -191,6 +205,8 @@ class _FormScreenState extends State<FormScreen> {
     _fao           = m?.fao ?? false;
     _esHejira      = m?.esHejira ?? false;
     _resellada     = m?.resellada ?? false;
+    _contramarcada = m?.contramarcada ?? false;
+    _variante      = m?.variante ?? false;
     _autenticidad  = (m != null && m.autenticidad.isNotEmpty) ? m.autenticidad : 'Original';
     _monedaPrecio  = (m != null && m.monedaPrecio.isNotEmpty) ? m.monedaPrecio : 'CUP';
     _valorEstimadoMoneda = (m != null && m.valorEstimadoMoneda.isNotEmpty) ? m.valorEstimadoMoneda : 'CUP';
@@ -217,6 +233,11 @@ class _FormScreenState extends State<FormScreen> {
       }
       if (_cantos.contains(m.canto)) _cantoSeleccionado = m.canto;
       if (m.canto.isNotEmpty) _cantoSeleccionado = m.canto;
+      if (_acabados.contains(m.acabado)) {
+        _acabadoSeleccionado = m.acabado;
+      } else if (m.acabado.isNotEmpty) {
+        _acabadoSeleccionado = m.acabado;
+      }
       if (_alineaciones.contains(m.alineacion)) _alineacionSeleccionada = m.alineacion;
     }
 
@@ -227,11 +248,13 @@ class _FormScreenState extends State<FormScreen> {
     final paises = await _db.obtenerPaisesPersonalizados();
     final metales = await _db.obtenerMetalesPersonalizados();
     final cantos = await _db.obtenerCantosPersonalizados();
+    final acabados = await _db.obtenerAcabadosPersonalizados();
     if (!mounted) return;
     setState(() {
       _paisesPersonalizados = paises;
       _metalesPersonalizados = metales;
       _cantosPersonalizados = cantos;
+      _acabadosPersonalizados = acabados;
     });
   }
 
@@ -240,8 +263,8 @@ class _FormScreenState extends State<FormScreen> {
     for (final c in [
       _periodoCtrl, _denominacionCtrl, _anioCtrl, _cecaCtrl,
       _kmCtrl, _acunadasCtrl, _pesoCtrl, _diametroCtrl, _grosorCtrl,
-      _leyCtrl, _detallesCtrl, _precioCompraCtrl,
-      _lugarCompraCtrl, _valorEstimadoCtrl,
+      _leyCtrl, _notasVarianteCtrl, _notasReselloCtrl, _detallesCtrl,
+      _precioCompraCtrl, _lugarCompraCtrl, _valorEstimadoCtrl,
       _precioVentaCtrl, _ubicacionCtrl, _notasCtrl,
     ]) {
       c.dispose();
@@ -336,6 +359,15 @@ class _FormScreenState extends State<FormScreen> {
     setState(() => _cantoSeleccionado = nombre);
   }
 
+  Future<void> _agregarAcabadoPersonalizado() async {
+    final nombre = await _pedirTextoNuevo(titulo: 'Añadir acabado', hint: 'Ej: Antique Finish');
+    if (nombre == null || !mounted) return;
+    await _db.insertarAcabadoPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+    if (!mounted) return;
+    setState(() => _acabadoSeleccionado = nombre);
+  }
+
   Future<String?> _elegirYcopiarImagen(ImageSource source) async {
     try {
       final pick = await _picker.pickImage(
@@ -404,6 +436,26 @@ class _FormScreenState extends State<FormScreen> {
     });
   }
 
+  Future<void> _abrirSelectorPais() async {
+    final paisesCompletos = <String>{
+      ..._paisesBase,
+      ..._paisesPersonalizados,
+      if (_paisSeleccionado != null && _paisSeleccionado!.isNotEmpty) _paisSeleccionado!,
+    }.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    final seleccionado = await mostrarBottomSheetSeleccionUnica(
+      context: context,
+      titulo: 'Seleccionar país',
+      opciones: paisesCompletos,
+      seleccionadoInicial: _paisSeleccionado,
+      textoOtro: 'Añadir país o territorio…',
+      onAgregarOtro: _agregarPaisPersonalizado,
+    );
+    if (seleccionado == null || !mounted) return;
+    setState(() => _paisSeleccionado = seleccionado);
+  }
+
   Future<void> _guardar() async {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) {
@@ -413,7 +465,13 @@ class _FormScreenState extends State<FormScreen> {
       return;
     }
 
-    // Validación de fotos obligatorias
+    if (_paisSeleccionado == null || _paisSeleccionado!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona un país.')),
+      );
+      return;
+    }
+
     if (_fotoAnverso == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Debes añadir la foto del anverso.')),
@@ -460,6 +518,13 @@ class _FormScreenState extends State<FormScreen> {
       canto: _cantoSeleccionado ?? '',
       alineacion: _alineacionSeleccionada ?? '',
       resellada: _resellada,
+      contramarcada: _contramarcada,
+      notasReselloContramarca: (_resellada || _contramarcada)
+          ? _notasReselloCtrl.text.trim()
+          : '',
+      acabado: _acabadoSeleccionado ?? '',
+      variante: _variante,
+      notasVariante: _variante ? _notasVarianteCtrl.text.trim() : '',
       gradoSheldon: _gradoSheldon ?? '',
       detallesVisibles: _detallesCtrl.text.trim(),
       autenticidad: _autenticidad,
@@ -491,6 +556,8 @@ class _FormScreenState extends State<FormScreen> {
       limpiarFotoReverso: _fotoReverso == null,
       limpiarFotoCanto: _fotoCanto == null,
       limpiarFotoKm: _fotoKm == null,
+      limpiarNotasVariante: !_variante,
+      limpiarNotasReselloContramarca: !(_resellada || _contramarcada),
     );
 
     try {
@@ -525,23 +592,26 @@ class _FormScreenState extends State<FormScreen> {
     final theme = Theme.of(context);
     final titulo = widget.esEdicion ? 'Editar moneda' : 'Nueva moneda';
 
-    final paisesCompletos = <String>{
-      ..._paisesBase,
-      ..._paisesPersonalizados,
-      if (_paisSeleccionado != null && _paisSeleccionado!.isNotEmpty) _paisSeleccionado!,
-    }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-
     final metalesCompletos = <String>{
       ..._metalesBase,
       ..._metalesPersonalizados,
       if (_metalSeleccionado != null && _metalSeleccionado!.isNotEmpty) _metalSeleccionado!,
-    }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    }.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     final cantosCompletos = <String>{
       ..._cantos,
       ..._cantosPersonalizados,
       if (_cantoSeleccionado != null && _cantoSeleccionado!.isNotEmpty) _cantoSeleccionado!,
-    }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    }.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    final acabadosCompletos = <String>{
+      ..._acabados,
+      ..._acabadosPersonalizados,
+      if (_acabadoSeleccionado != null && _acabadoSeleccionado!.isNotEmpty) _acabadoSeleccionado!,
+    }.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     return Scaffold(
       appBar: AppBar(title: Text(titulo)),
@@ -562,18 +632,40 @@ class _FormScreenState extends State<FormScreen> {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
           child: Column(
             children: [
+              // ---------------- Identificación ----------------
               _BloqueFormulario(
                 titulo: 'Identificación',
                 icono: Icons.badge_outlined,
                 hijos: [
-                  _DropdownConOtro(
-                    etiqueta: 'País *',
-                    icono: Icons.public,
-                    valor: _paisSeleccionado,
-                    items: paisesCompletos,
-                    onChanged: (v) => setState(() => _paisSeleccionado = v),
-                    onAgregarOtro: _agregarPaisPersonalizado,
-                    validadorObligatorio: true,
+                  // País con bottom sheet de selección única con búsqueda
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: _abrirSelectorPais,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'País *',
+                          prefixIcon: const Icon(Icons.public),
+                          errorText: (_paisSeleccionado == null ||
+                                  _paisSeleccionado!.isEmpty)
+                              ? null
+                              : null,
+                          suffixIcon: const Icon(Icons.arrow_drop_down),
+                        ),
+                        child: Text(
+                          (_paisSeleccionado == null || _paisSeleccionado!.isEmpty)
+                              ? 'Seleccionar país'
+                              : _paisSeleccionado!,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: (_paisSeleccionado == null ||
+                                    _paisSeleccionado!.isEmpty)
+                                ? theme.colorScheme.onSurface.withOpacity(0.6)
+                                : theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                   _TextoForm(
                     controller: _denominacionCtrl,
@@ -586,8 +678,7 @@ class _FormScreenState extends State<FormScreen> {
                     etiqueta: 'Período de acuñación',
                     icono: Icons.history_edu_outlined,
                   ),
-              
-                // Año + checkbox AH
+                  // Año + AH
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -614,7 +705,7 @@ class _FormScreenState extends State<FormScreen> {
                         flex: 4,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                                                    child: Container(
+                          child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               border: Border.all(
@@ -692,6 +783,8 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
+
+              // ---------------- Características físicas ----------------
               _BloqueFormulario(
                 titulo: 'Características físicas',
                 icono: Icons.straighten,
@@ -749,6 +842,15 @@ class _FormScreenState extends State<FormScreen> {
                     onAgregarOtro: _agregarCantoPersonalizado,
                     validadorObligatorio: false,
                   ),
+                  _DropdownConOtro(
+                    etiqueta: 'Acabado',
+                    icono: Icons.auto_awesome_outlined,
+                    valor: _acabadoSeleccionado,
+                    items: acabadosCompletos,
+                    onChanged: (v) => setState(() => _acabadoSeleccionado = v),
+                    onAgregarOtro: _agregarAcabadoPersonalizado,
+                    validadorObligatorio: false,
+                  ),
                   _Dropdown<String>(
                     etiqueta: 'Alineación',
                     icono: Icons.swap_horiz,
@@ -756,15 +858,68 @@ class _FormScreenState extends State<FormScreen> {
                     items: _alineaciones,
                     onChanged: (v) => setState(() => _alineacionSeleccionada = v),
                   ),
+                  // Resello y Contramarcada (excluyentes) + notas
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     dense: true,
-                    title: Text('Resellada', style: theme.textTheme.bodyLarge),
+                    title: Text('Resello', style: theme.textTheme.bodyLarge),
                     value: _resellada,
-                    onChanged: (v) => setState(() => _resellada = v),
+                    onChanged: (v) {
+                      setState(() {
+                        _resellada = v;
+                        if (v) _contramarcada = false;
+                        if (!_resellada && !_contramarcada) {
+                          _notasReselloCtrl.clear();
+                        }
+                      });
+                    },
                   ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text('Contramarcada', style: theme.textTheme.bodyLarge),
+                    value: _contramarcada,
+                    onChanged: (v) {
+                      setState(() {
+                        _contramarcada = v;
+                        if (v) _resellada = false;
+                        if (!_resellada && !_contramarcada) {
+                          _notasReselloCtrl.clear();
+                        }
+                      });
+                    },
+                  ),
+                  if (_resellada || _contramarcada)
+                    _TextoForm(
+                      controller: _notasReselloCtrl,
+                      etiqueta: 'Notas de resello / contramarca',
+                      icono: Icons.notes,
+                      maxLineas: 3,
+                    ),
+                  // Variante + notas
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text('Variante', style: theme.textTheme.bodyLarge),
+                    value: _variante,
+                    onChanged: (v) {
+                      setState(() {
+                        _variante = v;
+                        if (!v) _notasVarianteCtrl.clear();
+                      });
+                    },
+                  ),
+                  if (_variante)
+                    _TextoForm(
+                      controller: _notasVarianteCtrl,
+                      etiqueta: 'Notas de variante (ej: magnética, con punto…)',
+                      icono: Icons.notes,
+                      maxLineas: 3,
+                    ),
                 ],
               ),
+
+              // ---------------- Conservación y autenticidad ----------------
               _BloqueFormulario(
                 titulo: 'Conservación y autenticidad',
                 icono: Icons.verified_outlined,
@@ -815,6 +970,8 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
+
+              // ---------------- Adquisición y valoración ----------------
               _BloqueFormulario(
                 titulo: 'Adquisición y valoración',
                 icono: Icons.shopping_bag_outlined,
@@ -891,6 +1048,8 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
+
+              // ---------------- Multimedia ----------------
               _BloqueFormulario(
                 titulo: 'Multimedia',
                 icono: Icons.photo_camera_outlined,
@@ -925,6 +1084,8 @@ class _FormScreenState extends State<FormScreen> {
                   ),
                 ],
               ),
+
+              // ---------------- Ubicación y notas ----------------
               _BloqueFormulario(
                 titulo: 'Ubicación y notas',
                 icono: Icons.inventory_2_outlined,
