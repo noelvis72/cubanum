@@ -161,21 +161,21 @@ class _DetalleScreenState extends State<DetalleScreen> {
             const SizedBox(height: 16),
             _Encabezado(moneda: m),
             const SizedBox(height: 12),
-            
+
             // ---------------- Identificación ----------------
-_BloqueDetalle(
-  titulo: 'Identificación',
-  icono: Icons.badge_outlined,
-  filas: [
-    _FilaDato('País', m.pais),
-    _FilaDato('Denominación', m.denominacion),
-    _FilaDato('Período', m.periodoAcunacion),
-    _FilaDato(
-         'Año',
-          m.anio.isEmpty
-            ? ''
-           : (m.esHejira ? '${m.anio} AH' : m.anio),
-           valorWidget: (m.anio.isEmpty || !m.esHejira)
+            _BloqueDetalle(
+              titulo: 'Identificación',
+              icono: Icons.badge_outlined,
+              filas: [
+                _FilaDato('País', m.pais),
+                _FilaDato('Denominación', m.denominacion),
+                _FilaDato('Período', m.periodoAcunacion),
+                _FilaDato(
+                  'Año',
+                  m.anio.isEmpty
+                      ? ''
+                      : (m.esHejira ? '${m.anio} AH' : m.anio),
+                  valorWidget: (m.anio.isEmpty || !m.esHejira)
                       ? null
                       : Tooltip(
                           message: 'AH = Año Hégira (calendario lunar islámico). '
@@ -188,32 +188,41 @@ _BloqueDetalle(
                           ),
                         ),
                 ),
-    _FilaDato('Ceca', m.ceca),
-    _FilaDato('KM#', m.kmCatalogo),
-    _FilaDato('Acuñadas', m.acunadas?.toString()),
-    _FilaDato('Pertenece a la ONU', m.perteneceOnu ? 'Sí' : 'No'),
-    _FilaDato('Conmemorativa', m.conmemorativa ? 'Sí' : 'No'),
-    _FilaDato('FAO', m.fao ? 'Sí' : 'No'),
-    _FilaDato('Hégira', m.esHejira ? 'Sí' : 'No'),
-  ],
-),
+                _FilaDato('Ceca', m.ceca),
+                _FilaDato('KM#', m.kmCatalogo),
+                _FilaDato('Acuñadas', m.acunadas?.toString()),
+                _FilaDato('Pertenece a la ONU', m.perteneceOnu ? 'Sí' : 'No'),
+                _FilaDato('Conmemorativa', m.conmemorativa ? 'Sí' : 'No'),
+                _FilaDato('FAO', m.fao ? 'Sí' : 'No'),
+                _FilaDato('Hégira', m.esHejira ? 'Sí' : 'No'),
+              ],
+            ),
+
+            // ---------------- Características físicas ----------------
             _BloqueDetalle(
-             titulo: 'Características físicas',
-             icono: Icons.straighten,
-             filas: [
-               if (m.pesoG != null) _FilaDato('Peso', '${_num(m.pesoG!)} g'),
-               if (m.diametroMm != null) _FilaDato('Diámetro', '${_num(m.diametroMm!)} mm'),
-               if (m.grosorMm != null) _FilaDato('Grosor', '${_num(m.grosorMm!)} mm'),
-               _FilaDato('Forma', m.forma),
-               _FilaDato('Metal', m.metal),
-               _FilaDato('Ley', m.ley),
-               _FilaDato('Canto', m.canto),
-               _FilaDato('Alineación', m.alineacion),
-               _FilaDato('Resellada', m.resellada ? 'Sí' : 'No'),
-             ],
-           ),
+              titulo: 'Características físicas',
+              icono: Icons.straighten,
+              filas: [
+                if (m.pesoG != null) _FilaDato('Peso', '${_num(m.pesoG!)} g'),
+                if (m.diametroMm != null) _FilaDato('Diámetro', '${_num(m.diametroMm!)} mm'),
+                if (m.grosorMm != null) _FilaDato('Grosor', '${_num(m.grosorMm!)} mm'),
+                _FilaDato('Forma', m.forma),
+                _FilaDato('Metal', m.metal),
+                _FilaDato('Ley', m.ley),
+                _FilaDato('Canto', m.canto),
+                _FilaDato('Acabado', m.acabado),
+                _FilaDato('Alineación', m.alineacion),
+                _FilaDato('Resello', m.resellada ? 'Sí' : 'No'),
+                _FilaDato('Contramarcada', m.contramarcada ? 'Sí' : 'No'),
+                _FilaDato('Notas de resello / contramarca', m.notasReselloContramarca),
+                _FilaDato('Variante', m.variante ? 'Sí' : 'No'),
+                _FilaDato('Notas de variante', m.notasVariante),
+              ],
+            ),
+
+            // ---------------- Conservación y autenticidad ----------------
             _BloqueDetalle(
-              titulo: 'Conservación y Autenticidad',
+              titulo: 'Conservación y autenticidad',
               icono: Icons.verified_outlined,
               filas: [
                 _FilaDato('Grado Sheldon', m.gradoSheldon),
@@ -221,15 +230,17 @@ _BloqueDetalle(
                 _FilaDato('Detalles visibles', m.detallesVisibles),
               ],
             ),
+
+            // ---------------- Adquisición y valoración ----------------
             _BloqueDetalle(
-              titulo: 'Adquisición y Valoración',
+              titulo: 'Adquisición y valoración',
               icono: Icons.shopping_bag_outlined,
               filas: [
                 if (m.precioCompra != null)
                   _FilaDato('Precio de compra', _precio(m.precioCompra!, m.monedaPrecio)),
                 if (m.fechaCompra != null)
                   _FilaDato('Fecha de compra', _fecha(m.fechaCompra!)),
-                  _FilaDato('Lugar de compra', m.lugarCompra),
+                _FilaDato('Lugar de compra', m.lugarCompra),
                 if (m.valorEstimado != null)
                   _FilaDato('Valor estimado', _precio(m.valorEstimado!, m.valorEstimadoMoneda)),
                 if (m.precioVenta != null)
@@ -238,8 +249,10 @@ _BloqueDetalle(
                   _FilaDato('Fecha de venta', _fecha(m.fechaVenta!)),
               ],
             ),
+
+            // ---------------- Ubicación y notas ----------------
             _BloqueDetalle(
-              titulo: 'Ubicación y Notas',
+              titulo: 'Ubicación y notas',
               icono: Icons.inventory_2_outlined,
               filas: [
                 _FilaDato('Ubicación', m.ubicacion),
@@ -304,7 +317,8 @@ class _Encabezado extends StatelessWidget {
       if (moneda.denominacion.trim().isNotEmpty) moneda.denominacion.trim(),
     ].join(' · ');
     final subtitulo = [
-      if (moneda.anio.trim().isNotEmpty) moneda.anio.trim(),
+      if (moneda.anio.trim().isNotEmpty)
+        (moneda.esHejira ? '${moneda.anio} AH' : moneda.anio),
       if (moneda.gradoSheldon.trim().isNotEmpty) moneda.gradoSheldon.trim(),
     ].join(' · ');
 
@@ -329,7 +343,6 @@ class _Encabezado extends StatelessWidget {
   }
 }
 
-/// Modelo interno para la galería: empareja ruta con su etiqueta correcta.
 class _FotoItem {
   final String ruta;
   final String etiqueta;
@@ -501,7 +514,6 @@ class _Puntitos extends StatelessWidget {
   }
 }
 
-/// Data class: fila etiqueta/valor. El bloque renderiza solo las no vacías.
 class _FilaDato {
   final String etiqueta;
   final String? valor;
@@ -560,7 +572,7 @@ class _BloqueDetalle extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-               Expanded(
+                    Expanded(
                       child: f.valorWidget ??
                           SelectableText(f.valor!, style: theme.textTheme.bodyLarge),
                     ),
