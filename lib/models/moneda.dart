@@ -21,6 +21,11 @@ class Moneda {
   final String canto;
   final String alineacion;
   final bool resellada;
+  final bool contramarcada;
+  final String notasReselloContramarca;
+  final String acabado;
+  final bool variante;
+  final String notasVariante;
 
   final String gradoSheldon;
   final String detallesVisibles;
@@ -66,6 +71,11 @@ class Moneda {
     required this.canto,
     required this.alineacion,
     required this.resellada,
+    required this.contramarcada,
+    required this.notasReselloContramarca,
+    required this.acabado,
+    required this.variante,
+    required this.notasVariante,
     required this.gradoSheldon,
     required this.detallesVisibles,
     required this.autenticidad,
@@ -108,6 +118,11 @@ class Moneda {
         canto: '',
         alineacion: '',
         resellada: false,
+        contramarcada: false,
+        notasReselloContramarca: '',
+        acabado: '',
+        variante: false,
+        notasVariante: '',
         gradoSheldon: '',
         detallesVisibles: '',
         autenticidad: 'Original',
@@ -128,7 +143,7 @@ class Moneda {
         ubicacion: '',
       );
 
-    bool get vendida => precioVenta != null;
+  bool get vendida => precioVenta != null;
 
   Map<String, dynamic> toMap() => {
         if (id != null) 'id': id,
@@ -152,6 +167,11 @@ class Moneda {
         'canto': canto,
         'alineacion': alineacion,
         'resellada': resellada ? 1 : 0,
+        'contramarcada': contramarcada ? 1 : 0,
+        'notas_resello_contramarca': notasReselloContramarca,
+        'acabado': acabado,
+        'variante': variante ? 1 : 0,
+        'notas_variante': notasVariante,
         'grado_sheldon': gradoSheldon,
         'detalles_visibles': detallesVisibles,
         'autenticidad': autenticidad,
@@ -194,6 +214,11 @@ class Moneda {
         canto: (map['canto'] as String?) ?? '',
         alineacion: (map['alineacion'] as String?) ?? '',
         resellada: (map['resellada'] as int? ?? 0) == 1,
+        contramarcada: (map['contramarcada'] as int? ?? 0) == 1,
+        notasReselloContramarca: (map['notas_resello_contramarca'] as String?) ?? '',
+        acabado: (map['acabado'] as String?) ?? '',
+        variante: (map['variante'] as int? ?? 0) == 1,
+        notasVariante: (map['notas_variante'] as String?) ?? '',
         gradoSheldon: (map['grado_sheldon'] as String?) ?? '',
         detallesVisibles: (map['detalles_visibles'] as String?) ?? '',
         autenticidad: (map['autenticidad'] as String?) ?? 'Original',
@@ -268,6 +293,11 @@ class Moneda {
     String? canto,
     String? alineacion,
     bool? resellada,
+    bool? contramarcada,
+    String? notasReselloContramarca,
+    String? acabado,
+    bool? variante,
+    String? notasVariante,
     String? gradoSheldon,
     String? detallesVisibles,
     String? autenticidad,
@@ -299,6 +329,8 @@ class Moneda {
     bool limpiarFotoReverso = false,
     bool limpiarFotoCanto = false,
     bool limpiarFotoKm = false,
+    bool limpiarNotasVariante = false,
+    bool limpiarNotasReselloContramarca = false,
   }) {
     return Moneda(
       id: id ?? this.id,
@@ -322,6 +354,15 @@ class Moneda {
       canto: canto ?? this.canto,
       alineacion: alineacion ?? this.alineacion,
       resellada: resellada ?? this.resellada,
+      contramarcada: contramarcada ?? this.contramarcada,
+      notasReselloContramarca: limpiarNotasReselloContramarca
+          ? ''
+          : (notasReselloContramarca ?? this.notasReselloContramarca),
+      acabado: acabado ?? this.acabado,
+      variante: variante ?? this.variante,
+      notasVariante: limpiarNotasVariante
+          ? ''
+          : (notasVariante ?? this.notasVariante),
       gradoSheldon: gradoSheldon ?? this.gradoSheldon,
       detallesVisibles: detallesVisibles ?? this.detallesVisibles,
       autenticidad: autenticidad ?? this.autenticidad,
