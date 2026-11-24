@@ -11,11 +11,12 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbNombre = 'cubanum.db';
-  static const int _dbVersion = 7;
+  static const int _dbVersion = 8;
   static const String tablaMonedas = 'monedas';
   static const String tablaPaises = 'paises_personalizados';
   static const String tablaMetales = 'metales_personalizados';
   static const String tablaCantos = 'cantos_personalizados';
+  static const String tablaAcabados = 'acabados_personalizados';
   static const String tablaVentas = 'ventas';
 
   Database? _db;
@@ -45,45 +46,50 @@ class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tablaMonedas (
-        id                     INTEGER PRIMARY KEY AUTOINCREMENT,
-        pais                   TEXT    NOT NULL DEFAULT '',
-        pertenece_onu          INTEGER NOT NULL DEFAULT 0,
-        conmemorativa          INTEGER NOT NULL DEFAULT 0,
-        fao                    INTEGER NOT NULL DEFAULT 0,
-        periodo_acunacion      TEXT    NOT NULL DEFAULT '',
-        denominacion           TEXT    NOT NULL DEFAULT '',
-        anio                   TEXT    NOT NULL DEFAULT '',
-        es_hejira              INTEGER NOT NULL DEFAULT 0,
-        ceca                   TEXT    NOT NULL DEFAULT '',
-        km_catalogo            TEXT    NOT NULL DEFAULT '',
-        acunadas               INTEGER,
-        peso_g                 REAL,
-        diametro_mm            REAL,
-        grosor_mm              REAL,
-        forma                  TEXT    NOT NULL DEFAULT '',
-        metal                  TEXT    NOT NULL DEFAULT '',
-        ley                    TEXT    NOT NULL DEFAULT '',
-        canto                  TEXT    NOT NULL DEFAULT '',
-        alineacion             TEXT    NOT NULL DEFAULT '',
-        resellada              INTEGER NOT NULL DEFAULT 0,
-        grado_sheldon          TEXT    NOT NULL DEFAULT '',
-        detalles_visibles      TEXT    NOT NULL DEFAULT '',
-        autenticidad           TEXT    NOT NULL DEFAULT 'Original',
-        precio_compra          REAL,
-        moneda_precio          TEXT    NOT NULL DEFAULT 'CUP',
-        lugar_compra           TEXT    NOT NULL DEFAULT '',
-        fecha_compra           TEXT,
-        valor_estimado         REAL,
-        valor_estimado_moneda  TEXT    NOT NULL DEFAULT 'CUP',
-        precio_venta           REAL,
-        moneda_venta           TEXT    NOT NULL DEFAULT 'CUP',
-        fecha_venta            TEXT,
-        foto_anverso           TEXT,
-        foto_reverso           TEXT,
-        foto_canto             TEXT,
-        foto_km                TEXT,
-        notas                  TEXT    NOT NULL DEFAULT '',
-        ubicacion              TEXT    NOT NULL DEFAULT ''
+        id                            INTEGER PRIMARY KEY AUTOINCREMENT,
+        pais                          TEXT    NOT NULL DEFAULT '',
+        pertenece_onu                 INTEGER NOT NULL DEFAULT 0,
+        conmemorativa                 INTEGER NOT NULL DEFAULT 0,
+        fao                           INTEGER NOT NULL DEFAULT 0,
+        periodo_acunacion             TEXT    NOT NULL DEFAULT '',
+        denominacion                  TEXT    NOT NULL DEFAULT '',
+        anio                          TEXT    NOT NULL DEFAULT '',
+        es_hejira                     INTEGER NOT NULL DEFAULT 0,
+        ceca                          TEXT    NOT NULL DEFAULT '',
+        km_catalogo                   TEXT    NOT NULL DEFAULT '',
+        acunadas                      INTEGER,
+        peso_g                        REAL,
+        diametro_mm                   REAL,
+        grosor_mm                     REAL,
+        forma                         TEXT    NOT NULL DEFAULT '',
+        metal                         TEXT    NOT NULL DEFAULT '',
+        ley                           TEXT    NOT NULL DEFAULT '',
+        canto                         TEXT    NOT NULL DEFAULT '',
+        alineacion                    TEXT    NOT NULL DEFAULT '',
+        resellada                     INTEGER NOT NULL DEFAULT 0,
+        contramarcada                 INTEGER NOT NULL DEFAULT 0,
+        notas_resello_contramarca     TEXT    NOT NULL DEFAULT '',
+        acabado                       TEXT    NOT NULL DEFAULT '',
+        variante                      INTEGER NOT NULL DEFAULT 0,
+        notas_variante                TEXT    NOT NULL DEFAULT '',
+        grado_sheldon                 TEXT    NOT NULL DEFAULT '',
+        detalles_visibles             TEXT    NOT NULL DEFAULT '',
+        autenticidad                  TEXT    NOT NULL DEFAULT 'Original',
+        precio_compra                 REAL,
+        moneda_precio                 TEXT    NOT NULL DEFAULT 'CUP',
+        lugar_compra                  TEXT    NOT NULL DEFAULT '',
+        fecha_compra                  TEXT,
+        valor_estimado                REAL,
+        valor_estimado_moneda         TEXT    NOT NULL DEFAULT 'CUP',
+        precio_venta                  REAL,
+        moneda_venta                  TEXT    NOT NULL DEFAULT 'CUP',
+        fecha_venta                   TEXT,
+        foto_anverso                  TEXT,
+        foto_reverso                  TEXT,
+        foto_canto                    TEXT,
+        foto_km                       TEXT,
+        notas                         TEXT    NOT NULL DEFAULT '',
+        ubicacion                     TEXT    NOT NULL DEFAULT ''
       )
     ''');
 
@@ -103,6 +109,13 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE $tablaCantos (
+        id     INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $tablaAcabados (
         id     INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE
       )
@@ -202,6 +215,20 @@ class DatabaseHelper {
         });
       }
     }
+
+    if (oldVersion < 8) {
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN contramarcada INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN notas_resello_contramarca TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN acabado TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN variante INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE $tablaMonedas ADD COLUMN notas_variante TEXT NOT NULL DEFAULT ""');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tablaAcabados (
+          id     INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL UNIQUE
+        )
+      ''');
+    }
   }
 
   // ---------------- Monedas ----------------
@@ -300,26 +327,33 @@ class DatabaseHelper {
     final quiereReselladas = qLower == 'resellada' ||
         qLower == 'reselladas' ||
         qLower == 'resellado' ||
-        qLower == 'resellados';
+        qLower == 'resellados' ||
+        qLower == 'resello' ||
+        qLower == 'resellos';
+    final quiereContramarcadas = qLower == 'contramarcada' ||
+        qLower == 'contramarcadas' ||
+        qLower == 'contramarca' ||
+        qLower == 'contramarcas';
 
     final condiciones = <String>[
-      'pais           LIKE ?',
-      'denominacion   LIKE ?',
-      'anio           LIKE ?',
-      'km_catalogo    LIKE ?',
-      'ceca           LIKE ?',
-      'metal          LIKE ?',
-      'grado_sheldon  LIKE ?',
+      'pais              LIKE ?',
+      'denominacion      LIKE ?',
+      'anio              LIKE ?',
+      'km_catalogo       LIKE ?',
+      'ceca              LIKE ?',
+      'metal             LIKE ?',
+      'grado_sheldon     LIKE ?',
       'periodo_acunacion LIKE ?',
-      'forma          LIKE ?',
-      'canto          LIKE ?',
-      'autenticidad   LIKE ?',
-      'lugar_compra   LIKE ?',
-      'ubicacion      LIKE ?',
+      'forma             LIKE ?',
+      'canto             LIKE ?',
+      'acabado           LIKE ?',
+      'autenticidad      LIKE ?',
+      'lugar_compra      LIKE ?',
+      'ubicacion         LIKE ?',
     ];
     final args = <Object?>[
-      like, like, like, like, like, like, like, like, like,
-      like, like, like, like,
+      like, like, like, like, like, like, like, like, like, like, like,
+      like, like, like,
     ];
 
     if (quiereConmemorativa) condiciones.add('conmemorativa = 1');
@@ -327,6 +361,7 @@ class DatabaseHelper {
     if (quiereAh) condiciones.add('es_hejira = 1');
     if (quiereVendidas) condiciones.add('precio_venta IS NOT NULL');
     if (quiereReselladas) condiciones.add('resellada = 1');
+    if (quiereContramarcadas) condiciones.add('contramarcada = 1');
 
     final rows = await db.query(
       tablaMonedas,
@@ -464,12 +499,30 @@ class DatabaseHelper {
     return db.delete(tablaCantos, where: 'nombre = ?', whereArgs: [nombre]);
   }
 
+  // ---------------- Acabados personalizados ----------------
+
+  Future<int> insertarAcabadoPersonalizado(String nombre) async {
+    final db = await database;
+    final n = nombre.trim();
+    if (n.isEmpty) return -1;
+    return db.insert(tablaAcabados, {'nombre': n}, conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  Future<List<String>> obtenerAcabadosPersonalizados() async {
+    final db = await database;
+    final rows = await db.query(tablaAcabados, orderBy: 'nombre COLLATE NOCASE ASC');
+    return rows.map((r) => (r['nombre'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+  }
+
+  Future<int> eliminarAcabadoPersonalizado(String nombre) async {
+    final db = await database;
+    return db.delete(tablaAcabados, where: 'nombre = ?', whereArgs: [nombre]);
+  }
+
   // =====================================================================
-  // FASE 1 - FILTROS: nuevos métodos
+  // FILTROS
   // =====================================================================
 
-  /// Devuelve los países presentes en la colección con su contador,
-  /// ordenados alfabéticamente.
   Future<List<MapEntry<String, int>>> obtenerPaisesConMonedas() async {
     final db = await database;
     final rows = await db.rawQuery('''
@@ -480,16 +533,11 @@ class DatabaseHelper {
       ORDER BY pais COLLATE NOCASE ASC
     ''');
     return rows
-        .map((r) => MapEntry(
-              (r['pais'] as String?) ?? '',
-              (r['total'] as int?) ?? 0,
-            ))
+        .map((r) => MapEntry((r['pais'] as String?) ?? '', (r['total'] as int?) ?? 0))
         .where((e) => e.key.isNotEmpty)
         .toList();
   }
 
-  /// Devuelve los metales presentes en la colección con su contador,
-  /// ordenados alfabéticamente.
   Future<List<MapEntry<String, int>>> obtenerMetalesConMonedas() async {
     final db = await database;
     final rows = await db.rawQuery('''
@@ -500,16 +548,11 @@ class DatabaseHelper {
       ORDER BY metal COLLATE NOCASE ASC
     ''');
     return rows
-        .map((r) => MapEntry(
-              (r['metal'] as String?) ?? '',
-              (r['total'] as int?) ?? 0,
-            ))
+        .map((r) => MapEntry((r['metal'] as String?) ?? '', (r['total'] as int?) ?? 0))
         .where((e) => e.key.isNotEmpty)
         .toList();
   }
 
-  /// Devuelve las formas presentes en la colección con su contador,
-  /// ordenadas alfabéticamente.
   Future<List<MapEntry<String, int>>> obtenerFormasConMonedas() async {
     final db = await database;
     final rows = await db.rawQuery('''
@@ -520,26 +563,11 @@ class DatabaseHelper {
       ORDER BY forma COLLATE NOCASE ASC
     ''');
     return rows
-        .map((r) => MapEntry(
-              (r['forma'] as String?) ?? '',
-              (r['total'] as int?) ?? 0,
-            ))
+        .map((r) => MapEntry((r['forma'] as String?) ?? '', (r['total'] as int?) ?? 0))
         .where((e) => e.key.isNotEmpty)
         .toList();
   }
 
-  /// Búsqueda combinada con filtros de chips + texto libre.
-  ///
-  /// Todos los filtros son opcionales. Si un filtro es null o vacío,
-  /// no se aplica. Los filtros se combinan con AND.
-  ///
-  /// El texto libre busca en los mismos campos que [buscar] y mantiene
-  /// las palabras clave especiales (fao, ah, vendida, resellada,
-  /// conmemorativa).
-  ///
-  /// El rango de años solo aplica a monedas con `anio` puramente numérico.
-  /// Las monedas con `c. 1890`, `1902-1915`, etc. quedan excluidas del filtro
-  /// de rango.
   Future<List<Moneda>> obtenerMonedasConFiltros({
     String? texto,
     List<String>? paises,
@@ -554,7 +582,6 @@ class DatabaseHelper {
     final condiciones = <String>[];
     final args = <Object?>[];
 
-    // ---------- Filtro de texto libre ----------
     final q = (texto ?? '').trim();
     if (q.isNotEmpty) {
       final like = '%$q%';
@@ -577,22 +604,29 @@ class DatabaseHelper {
       final quiereReselladas = qLower == 'resellada' ||
           qLower == 'reselladas' ||
           qLower == 'resellado' ||
-          qLower == 'resellados';
+          qLower == 'resellados' ||
+          qLower == 'resello' ||
+          qLower == 'resellos';
+      final quiereContramarcadas = qLower == 'contramarcada' ||
+          qLower == 'contramarcadas' ||
+          qLower == 'contramarca' ||
+          qLower == 'contramarcas';
 
       final camposTexto = <String>[
-        'pais           LIKE ?',
-        'denominacion   LIKE ?',
-        'anio           LIKE ?',
-        'km_catalogo    LIKE ?',
-        'ceca           LIKE ?',
-        'metal          LIKE ?',
-        'grado_sheldon  LIKE ?',
+        'pais              LIKE ?',
+        'denominacion      LIKE ?',
+        'anio              LIKE ?',
+        'km_catalogo       LIKE ?',
+        'ceca              LIKE ?',
+        'metal             LIKE ?',
+        'grado_sheldon     LIKE ?',
         'periodo_acunacion LIKE ?',
-        'forma          LIKE ?',
-        'canto          LIKE ?',
-        'autenticidad   LIKE ?',
-        'lugar_compra   LIKE ?',
-        'ubicacion      LIKE ?',
+        'forma             LIKE ?',
+        'canto             LIKE ?',
+        'acabado           LIKE ?',
+        'autenticidad      LIKE ?',
+        'lugar_compra      LIKE ?',
+        'ubicacion         LIKE ?',
       ];
       for (var i = 0; i < camposTexto.length; i++) {
         args.add(like);
@@ -602,48 +636,42 @@ class DatabaseHelper {
       if (quiereAh) camposTexto.add('es_hejira = 1');
       if (quiereVendidas) camposTexto.add('precio_venta IS NOT NULL');
       if (quiereReselladas) camposTexto.add('resellada = 1');
+      if (quiereContramarcadas) camposTexto.add('contramarcada = 1');
 
       condiciones.add('(${camposTexto.join(' OR ')})');
     }
 
-    // ---------- Filtro de países ----------
     if (paises != null && paises.isNotEmpty) {
       final placeholders = List.filled(paises.length, '?').join(', ');
       condiciones.add('pais IN ($placeholders)');
       args.addAll(paises);
     }
 
-    // ---------- Filtro de metales ----------
     if (metales != null && metales.isNotEmpty) {
       final placeholders = List.filled(metales.length, '?').join(', ');
       condiciones.add('metal IN ($placeholders)');
       args.addAll(metales);
     }
 
-    // ---------- Filtro de formas ----------
     if (formas != null && formas.isNotEmpty) {
       final placeholders = List.filled(formas.length, '?').join(', ');
       condiciones.add('forma IN ($placeholders)');
       args.addAll(formas);
     }
 
-    // ---------- Filtro de moneda de compra ----------
     if (monedasCompra != null && monedasCompra.isNotEmpty) {
       final placeholders = List.filled(monedasCompra.length, '?').join(', ');
       condiciones.add('moneda_precio IN ($placeholders)');
       args.addAll(monedasCompra);
     }
 
-    // ---------- Filtro de autenticidades ----------
     if (autenticidades != null && autenticidades.isNotEmpty) {
       final placeholders = List.filled(autenticidades.length, '?').join(', ');
       condiciones.add('autenticidad IN ($placeholders)');
       args.addAll(autenticidades);
     }
 
-    // ---------- Filtro de rango de años ----------
     if (anioDesde != null || anioHasta != null) {
-      // Solo años numéricos puros (excluye "c. 1890", "1902-1915", etc.)
       condiciones.add("anio GLOB '[0-9]*'");
       if (anioDesde != null) {
         condiciones.add('CAST(anio AS INTEGER) >= ?');
