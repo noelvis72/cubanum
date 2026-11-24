@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
 /// Bottom sheet reutilizable para seleccionar múltiples opciones de una lista.
-///
-/// Cabecera con checkbox "marcar/desmarcar todos" estilo Gmail (tristate).
-/// Cuerpo con la lista de opciones y sus contadores.
-/// Pie con solo "Cancelar" y "Aplicar".
 Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
   required BuildContext context,
   required String titulo,
@@ -31,29 +27,25 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                   e.key.toLowerCase().contains(filtro.toLowerCase()))
               .toList();
 
-          // Estado del checkbox de cabecera
           final totalVisibles = opcionesFiltradas.length;
-          final marcadosVisibles = opcionesFiltradas
-              .where((e) => seleccionados.contains(e.key))
-              .length;
+          final marcadosVisibles =
+              opcionesFiltradas.where((e) => seleccionados.contains(e.key)).length;
           bool? estadoCheckbox;
           if (marcadosVisibles == 0) {
             estadoCheckbox = false;
           } else if (marcadosVisibles == totalVisibles) {
             estadoCheckbox = true;
           } else {
-            estadoCheckbox = null; // indeterminado
+            estadoCheckbox = null;
           }
 
           void toggleTodos() {
             setSheetState(() {
               if (estadoCheckbox == true) {
-                // Desmarcar todos los visibles
                 for (final op in opcionesFiltradas) {
                   seleccionados.remove(op.key);
                 }
               } else {
-                // Marcar todos los visibles
                 for (final op in opcionesFiltradas) {
                   seleccionados.add(op.key);
                 }
@@ -72,7 +64,6 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle
                 Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: 4),
                   child: Container(
@@ -84,7 +75,6 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                     ),
                   ),
                 ),
-                // Cabecera: checkbox + título
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 4, 16, 8),
                   child: Row(
@@ -111,7 +101,6 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                     ],
                   ),
                 ),
-                // Buscador
                 if (mostrarBuscador && opciones.length > 8)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -130,15 +119,11 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                     ),
                   ),
                 const SizedBox(height: 8),
-                // Lista
                 Flexible(
                   child: opcionesFiltradas.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'Sin opciones',
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                          child: Text('Sin opciones', style: theme.textTheme.bodyMedium),
                         )
                       : ListView.builder(
                           shrinkWrap: true,
@@ -147,8 +132,7 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                             final op = opcionesFiltradas[i];
                             final sel = seleccionados.contains(op.key);
                             return CheckboxListTile(
-                              contentPadding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                               title: Text(op.key),
                               subtitle: Text('${op.value}'),
                               value: sel,
@@ -167,7 +151,6 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                         ),
                 ),
                 const Divider(height: 1),
-                // Pie: solo Cancelar y Aplicar
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
@@ -179,10 +162,7 @@ Future<List<String>?> mostrarBottomSheetSeleccionMultiple({
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
-                        onPressed: () => Navigator.pop(
-                          ctx,
-                          seleccionados.toList(),
-                        ),
+                        onPressed: () => Navigator.pop(ctx, seleccionados.toList()),
                         child: const Text('Aplicar'),
                       ),
                     ],
@@ -218,9 +198,7 @@ Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
       final scheme = theme.colorScheme;
 
       return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: StatefulBuilder(
           builder: (ctx, setSheetState) {
             return Container(
@@ -247,10 +225,7 @@ Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            'Rango de años',
-                            style: theme.textTheme.titleLarge,
-                          ),
+                          child: Text('Rango de años', style: theme.textTheme.titleLarge),
                         ),
                       ],
                     ),
@@ -288,12 +263,8 @@ Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
                   if (error != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: Text(
-                        error!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.error,
-                        ),
-                      ),
+                      child: Text(error!,
+                          style: theme.textTheme.bodySmall?.copyWith(color: scheme.error)),
                     ),
                   const SizedBox(height: 16),
                   Padding(
@@ -332,8 +303,8 @@ Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
                               return;
                             }
                             if (d != null && h != null && d > h) {
-                              setSheetState(() => error =
-                                  '"Desde" no puede ser mayor que "Hasta"');
+                              setSheetState(() =>
+                                  error = '"Desde" no puede ser mayor que "Hasta"');
                               return;
                             }
                             if (d == null && h == null) {
@@ -358,5 +329,135 @@ Future<(int?, int?)?> mostrarBottomSheetRangoAnio({
 
   desdeCtrl.dispose();
   hastaCtrl.dispose();
+  return resultado;
+}
+
+/// Bottom sheet para seleccionar UNA sola opción de una lista.
+/// Devuelve la opción seleccionada, o null si cancela.
+Future<String?> mostrarBottomSheetSeleccionUnica({
+  required BuildContext context,
+  required String titulo,
+  required List<String> opciones,
+  String? seleccionadoInicial,
+  String? textoOtro,
+  VoidCallback? onAgregarOtro,
+}) async {
+  String filtro = '';
+
+  final resultado = await showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) {
+      final theme = Theme.of(ctx);
+      final scheme = theme.colorScheme;
+
+      return StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final opcionesFiltradas = opciones
+              .where((e) =>
+                  filtro.isEmpty || e.toLowerCase().contains(filtro.toLowerCase()))
+              .toList();
+
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+            ),
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 4),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: scheme.outline.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(titulo, style: theme.textTheme.titleLarge),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Buscar…',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      isDense: true,
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onChanged: (v) => setSheetState(() => filtro = v),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      ...opcionesFiltradas.map((op) {
+                        final sel = op == seleccionadoInicial;
+                        return ListTile(
+                          title: Text(op),
+                          trailing: sel
+                              ? Icon(Icons.check, color: scheme.primary)
+                              : null,
+                          selected: sel,
+                          onTap: () => Navigator.pop(ctx, op),
+                        );
+                      }),
+                      if (onAgregarOtro != null)
+                        ListTile(
+                          leading: const Icon(Icons.add),
+                          title: Text(
+                            textoOtro ?? 'Añadir nuevo…',
+                            style: const TextStyle(fontStyle: FontStyle.italic),
+                          ),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            onAgregarOtro();
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, null),
+                        child: const Text('Cancelar'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+
   return resultado;
 }
