@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'estadisticas_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 
 import '../db/database_helper.dart';
 import '../services/export_service.dart';
+import '../services/backup_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
+import 'estadisticas_screen.dart';
 import 'referencias_screen.dart';
-import '../services/backup_service.dart';
 
 class AjustesScreen extends StatefulWidget {
   const AjustesScreen({super.key});
@@ -26,10 +27,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
   int? _totalMonedas;
   bool _cargandoTotal = true;
   bool _exportando = false;
-  bool _creandoBackup = false;
+
   List<String> _paisesPersonalizados = [];
   List<String> _metalesPersonalizados = [];
   List<String> _cantosPersonalizados = [];
+  List<String> _acabadosPersonalizados = [];
   bool _cargandoListas = true;
 
   @override
@@ -49,253 +51,206 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   Future<void> _cargarListasPersonalizadas() async {
-       final paises = await _db.obtenerPaisesPersonalizados();
-      final metales = await _db.obtenerMetalesPersonalizados();
-      final cantos = await _db.obtenerCantosPersonalizados();
-        if (!mounted) return;
-     setState(() {
-         _paisesPersonalizados = paises;
-         _metalesPersonalizados = metales;
-         _cantosPersonalizados = cantos;
-         _cargandoListas = false;
-  });
-}
+    final paises = await _db.obtenerPaisesPersonalizados();
+    final metales = await _db.obtenerMetalesPersonalizados();
+    final cantos = await _db.obtenerCantosPersonalizados();
+    final acabados = await _db.obtenerAcabadosPersonalizados();
+    if (!mounted) return;
+    setState(() {
+      _paisesPersonalizados = paises;
+      _metalesPersonalizados = metales;
+      _cantosPersonalizados = cantos;
+      _acabadosPersonalizados = acabados;
+      _cargandoListas = false;
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Exportación
+  // -----------------------------------------------------------------
 
   Future<void> _exportarPdf() async {
-  if (_exportando) return;
+    if (_exportando) return;
 
-  final prefs = await SharedPreferences.getInstance();
-  final nombreGuardado = prefs.getString('cubanum_nombre_coleccionista') ?? '';
-  final nombreCtrl = TextEditingController(text: nombreGuardado);
-  final fechaCtrl = TextEditingController(
-    text: DateFormat('dd/MM/yyyy').format(DateTime.now()),
-  );
-  int paso = 0;
-  bool conFotos = true;
-
-  final resultado = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setDialogState) {
-        return AlertDialog(
-          title: Text(paso == 0 ? 'Datos del catálogo' : 'Modo de exportación'),
-          content: paso == 0
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nombreCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Coleccionista',
-                        hintText: 'Nombre y apellidos',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: fechaCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha',
-                        hintText: 'dd/mm/aaaa',
-                        prefixIcon: Icon(Icons.calendar_today_outlined),
-                      ),
-                    ),
-                  ],
-                )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    RadioListTile<bool>(
-                      contentPadding: EdgeInsets.zero,
-                      value: true,
-                      groupValue: conFotos,
-                      onChanged: (v) => setDialogState(() => conFotos = v ?? true),
-                      title: const Text('Catálogo visual (con fotos)'),
-                      subtitle: const Text('~3 monedas por página'),
-                    ),
-                    RadioListTile<bool>(
-                      contentPadding: EdgeInsets.zero,
-                      value: false,
-                      groupValue: conFotos,
-                      onChanged: (v) => setDialogState(() => conFotos = v ?? true),
-                      title: const Text('Listado compacto (sin fotos)'),
-                      subtitle: const Text('~20 monedas por página'),
-                    ),
-                  ],
-                ),
-          actions: paso == 0
-              ? [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Cancelar'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => setDialogState(() => paso = 1),
-                    child: const Text('Siguiente'),
-                  ),
-                ]
-              : [
-                  TextButton(
-                    onPressed: () => setDialogState(() => paso = 0),
-                    child: const Text('Atrás'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('Exportar'),
-                  ),
-                ],
-        );
-      },
-    ),
-  );
-
-  final nombre = nombreCtrl.text.trim();
-  final fecha = fechaCtrl.text.trim();
-  nombreCtrl.dispose();
-  fechaCtrl.dispose();
-
-  if (resultado != true || !mounted) return;
-
-  if (nombre.isNotEmpty) {
-    await prefs.setString('cubanum_nombre_coleccionista', nombre);
-  }
-
-  setState(() => _exportando = true);
-  try {
-    final monedas = await _db.obtenerTodas();
-    if (monedas.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay monedas que exportar')),
-      );
-      return;
-    }
-    final ok = await ExportService.generarPdf(
-      monedas,
-      nombreColeccionista: nombre.isEmpty ? 'Coleccionista' : nombre,
-      fecha: fecha.isEmpty ? DateFormat('dd/MM/yyyy').format(DateTime.now()) : fecha,
-      conFotos: conFotos,
+    final prefs = await SharedPreferences.getInstance();
+    final nombreGuardado = prefs.getString('cubanum_nombre_coleccionista') ?? '';
+    final nombreCtrl = TextEditingController(text: nombreGuardado);
+    final fechaCtrl = TextEditingController(
+      text: DateFormat('dd/MM/yyyy').format(DateTime.now()),
     );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'PDF guardado' : 'Exportación cancelada')),
-    );
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error al exportar PDF: $e')),
-    );
-  } finally {
-    if (mounted) setState(() => _exportando = false);
-  }
-}
+    int paso = 0;
+    bool conFotos = true;
 
-  Future<void> _exportarExcel() async {
-  if (_exportando) return;
-  setState(() => _exportando = true);
-  try {
-    final monedas = await _db.obtenerTodas();
-    if (monedas.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay monedas que exportar')),
-      );
-      return;
-    }
-    final ok = await ExportService.generarExcel(monedas);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'Excel guardado' : 'Exportación cancelada')),
-    );
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error al exportar Excel: $e')),
-    );
-  } finally {
-    if (mounted) setState(() => _exportando = false);
-  }
-}
-  
-    Future<void> _crearBackup() async {
-    if (_creandoBackup) return;
-    setState(() => _creandoBackup = true);
-    try {
-      final guardado = await BackupService.crearBackup();
-      if (!mounted) return;
-      if (guardado) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Copia de seguridad guardada')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Copia cancelada o no se pudo guardar')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _creandoBackup = false);
-    }
-  }
-
-    Future<void> _restaurarBackup() async {
-    final confirmado = await showDialog<bool>(
+    final resultado = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Restaurar copia de seguridad'),
-        content: const Text(
-          'Esto REEMPLAZARÁ todas las monedas y fotos actuales por las de '
-          'la copia de seguridad.\n\n'
-          'Se guardará una copia automática de la colección actual.\n\n'
-          '¿Continuar?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            child: const Text('Restaurar'),
-          ),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return AlertDialog(
+            title: Text(paso == 0 ? 'Datos del catálogo' : 'Modo de exportación'),
+            content: paso == 0
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nombreCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Coleccionista',
+                          hintText: 'Nombre y apellidos',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: fechaCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha',
+                          hintText: 'dd/mm/aaaa',
+                          prefixIcon: Icon(Icons.calendar_today_outlined),
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RadioListTile<bool>(
+                        contentPadding: EdgeInsets.zero,
+                        value: true,
+                        groupValue: conFotos,
+                        onChanged: (v) => setDialogState(() => conFotos = v ?? true),
+                        title: const Text('Catálogo visual (con fotos)'),
+                        subtitle: const Text('~3 monedas por página'),
+                      ),
+                      RadioListTile<bool>(
+                        contentPadding: EdgeInsets.zero,
+                        value: false,
+                        groupValue: conFotos,
+                        onChanged: (v) => setDialogState(() => conFotos = v ?? true),
+                        title: const Text('Listado compacto (sin fotos)'),
+                        subtitle: const Text('~20 monedas por página'),
+                      ),
+                    ],
+                  ),
+            actions: paso == 0
+                ? [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => setDialogState(() => paso = 1),
+                      child: const Text('Siguiente'),
+                    ),
+                  ]
+                : [
+                    TextButton(
+                      onPressed: () => setDialogState(() => paso = 0),
+                      child: const Text('Atrás'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Exportar'),
+                    ),
+                  ],
+          );
+        },
       ),
     );
 
-    if (confirmado != true || !mounted) return;
+    final nombre = nombreCtrl.text.trim();
+    final fecha = fechaCtrl.text.trim();
+    nombreCtrl.dispose();
+    fechaCtrl.dispose();
 
-    setState(() => _creandoBackup = true);
+    if (resultado != true || !mounted) return;
+
+    if (nombre.isNotEmpty) {
+      await prefs.setString('cubanum_nombre_coleccionista', nombre);
+    }
+
+    setState(() => _exportando = true);
     try {
-      final ok = await BackupService.restaurarBackup();
-      if (!mounted) return;
-      await _cargarTotal();
-      if (!mounted) return;
-      if (ok) {
+      final monedas = await _db.obtenerTodas();
+      if (monedas.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Copia restaurada correctamente')),
+          const SnackBar(content: Text('No hay monedas que exportar')),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo restaurar la copia')),
-        );
+        return;
       }
+      final ok = await ExportService.generarPdf(
+        monedas,
+        nombreColeccionista: nombre.isEmpty ? 'Coleccionista' : nombre,
+        fecha: fecha.isEmpty ? DateFormat('dd/MM/yyyy').format(DateTime.now()) : fecha,
+        conFotos: conFotos,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? 'PDF guardado' : 'Exportación cancelada')),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('Error al exportar PDF: $e')),
       );
     } finally {
-      if (mounted) setState(() => _creandoBackup = false);
+      if (mounted) setState(() => _exportando = false);
     }
   }
+
+  Future<void> _exportarExcel() async {
+    if (_exportando) return;
+    setState(() => _exportando = true);
+    try {
+      final monedas = await _db.obtenerTodas();
+      if (monedas.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay monedas que exportar')),
+        );
+        return;
+      }
+      final ok = await ExportService.generarExcel(monedas);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? 'Excel guardado' : 'Exportación cancelada')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al exportar Excel: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _exportando = false);
+    }
+  }
+
+  // -----------------------------------------------------------------
+  // Backup
+  // -----------------------------------------------------------------
   
+  Future<void> _crearBackup() async {
+  if (_exportando) return;
+  setState(() => _exportando = true);
+  try {
+    final ok = await BackupService.crearBackup();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'Copia de seguridad guardada' : 'Copia cancelada')),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al crear copia: $e')),
+    );
+  } finally {
+    if (mounted) setState(() => _exportando = false);
+  }
+
+  // -----------------------------------------------------------------
+  // Borrado
+  // -----------------------------------------------------------------
+
   Future<void> _confirmarBorrado() async {
     final confirmado = await showDialog<bool>(
       context: context,
@@ -331,10 +286,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
   }
 
-    Future<void> _confirmarBorrarVendidas() async {
-    // Contar cuántas hay
-    final db = _db;
-    final totalVendidas = await db.contarVendidas();
+  Future<void> _confirmarBorrarVendidas() async {
+    final totalVendidas = await _db.contarVendidas();
     if (!mounted) return;
 
     if (totalVendidas == 0) {
@@ -370,18 +323,19 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
 
     if (confirmado != true || !mounted) return;
-
     await _db.eliminarVendidas();
     if (!mounted) return;
-
     await _cargarTotal();
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Se eliminaron $totalVendidas monedas vendidas')),
     );
   }
-  
+
+  // -----------------------------------------------------------------
+  // Listas personalizadas
+  // -----------------------------------------------------------------
+
   Future<void> _eliminarPais(String nombre) async {
     await _db.eliminarPaisPersonalizado(nombre);
     await _cargarListasPersonalizadas();
@@ -391,10 +345,41 @@ class _AjustesScreenState extends State<AjustesScreen> {
     await _db.eliminarMetalPersonalizado(nombre);
     await _cargarListasPersonalizadas();
   }
+
   Future<void> _eliminarCanto(String nombre) async {
     await _db.eliminarCantoPersonalizado(nombre);
     await _cargarListasPersonalizadas();
   }
+
+  Future<void> _eliminarAcabado(String nombre) async {
+    await _db.eliminarAcabadoPersonalizado(nombre);
+    await _cargarListasPersonalizadas();
+  }
+
+  // -----------------------------------------------------------------
+  // Navegación
+  // -----------------------------------------------------------------
+
+  Future<void> _abrirReferencias(int tab) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReferenciasScreen(initialTab: tab),
+      ),
+    );
+  }
+
+  Future<void> _abrirEstadisticas() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EstadisticasScreen()),
+    );
+  }
+
+  // -----------------------------------------------------------------
+  // Build
+  // -----------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -489,82 +474,61 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ],
           ),
 
-                    // ---------------- Copia de seguridad ----------------
+          // ---------------- Copia de seguridad ----------------
           _SeccionAjustes(
             titulo: 'Copia de seguridad',
             icono: Icons.settings_backup_restore,
             hijos: [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                enabled: !_creandoBackup,
+                enabled: !_exportando,
                 leading: const Icon(Icons.save_alt),
                 title: const Text('Crear copia de seguridad'),
-                subtitle: const Text('Guarda la colección y las fotos en un ZIP'),
-                trailing: _creandoBackup
+                subtitle: const Text('Guarda la colección en un ZIP'),
+                trailing: _exportando
                     ? const SizedBox(
                         width: 18, height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.chevron_right),
-                onTap: _creandoBackup ? null : _crearBackup,
+                onTap: _exportando ? null : _crearBackup,
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                enabled: !_creandoBackup,
+                enabled: !_exportando,
                 leading: const Icon(Icons.restore),
                 title: const Text('Restaurar copia de seguridad'),
                 subtitle: const Text('Reemplaza la colección actual por una copia'),
-                trailing: _creandoBackup
-                    ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.chevron_right),
-                onTap: _creandoBackup ? null : _restaurarBackup,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _exportando ? null : () {
+                  // Nota: la restauración está en el Home también.
+                  // Aquí podrías llamar al servicio de restauración.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Usa el icono de backup del Home para restaurar')),
+                  );
+                },
               ),
             ],
           ),
-          
-          // ---------------- Herramientas numismáticas ----------------
-                    _SeccionAjustes(
+
+          // ---------------- Referencias numismáticas ----------------
+          _SeccionAjustes(
             titulo: 'Referencias numismáticas',
             icono: Icons.menu_book_outlined,
             hijos: [
               _CardHerramienta(
                 titulo: 'Conversión\nHégira ↔ Gregoriano',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ReferenciasScreen(initialTab: 1),
-                    ),
-                  );
-                },
+                onTap: () => _abrirReferencias(1),
               ),
               const SizedBox(height: 8),
               _CardHerramienta(
                 titulo: 'Sistemas Standard\nNumérico Internacional',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ReferenciasScreen(initialTab: 0),
-                    ),
-                  );
-                },
+                onTap: () => _abrirReferencias(0),
               ),
               const SizedBox(height: 8),
-              // <-- NUEVA
               _CardHerramienta(
                 titulo: 'Estadísticas\nde la colección',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const EstadisticasScreen(),
-                    ),
-                  );
-                },
+                onTap: _abrirEstadisticas,
               ),
             ],
           ),
@@ -577,7 +541,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  'Países y metales que añadiste con "OTRO…"',
+                  'Países, metales, cantos y acabados que añadiste con "OTRO…"',
                   style: theme.textTheme.bodySmall,
                 ),
               ),
@@ -605,12 +569,18 @@ class _AjustesScreenState extends State<AjustesScreen> {
                   items: _cantosPersonalizados,
                   onEliminar: _eliminarCanto,
                 ),
+                _SubLista(
+                  titulo: 'Acabados',
+                  icono: Icons.auto_awesome_outlined,
+                  items: _acabadosPersonalizados,
+                  onEliminar: _eliminarAcabado,
+                ),
               ],
             ],
           ),
 
           // ---------------- Peligro ----------------
-                    _SeccionAjustes(
+          _SeccionAjustes(
             titulo: 'Peligro',
             icono: Icons.warning_amber_outlined,
             hijos: [
@@ -647,7 +617,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               ),
             ],
           ),
-          
+
           // ---------------- Acerca de ----------------
           _SeccionAjustes(
             titulo: 'Acerca de',
@@ -661,7 +631,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                     Text('CUBANUM', style: theme.textTheme.titleLarge),
                     const SizedBox(height: 4),
                     Text(
-                      'Control numismático personal · v1.0.0',
+                      'Control numismático personal · v1.1.0',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.75),
                       ),
@@ -669,7 +639,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                     const SizedBox(height: 10),
                     _LineaAcerca('Desarrollador', 'Noelvis Torres Abreu'),
                     const SizedBox(height: 4),
-                    _LineaAcerca('Programado en', 'Flutter 3.47.8 · Dart 3.13 · GitHub Actions'),
+                    _LineaAcerca('Programado en', 'Flutter 3.47.8 · Dart 3.13 · SQLite · GitHub Actions'),
                     const SizedBox(height: 10),
                     Text(
                       'Gestiona tu colección de monedas de forma local y '
@@ -689,7 +659,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 }
 
 // =====================================================================
-// Selector de temas (5 tarjetas horizontales)
+// Selector de temas (tarjetas horizontales)
 // =====================================================================
 
 class _SelectorTemas extends StatelessWidget {
@@ -719,9 +689,7 @@ class _SelectorTemas extends StatelessWidget {
                   color: t.scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: seleccionado
-                        ? t.colorScheme.primary
-                        : t.colorScheme.outline,
+                    color: seleccionado ? t.colorScheme.primary : t.colorScheme.outline,
                     width: seleccionado ? 2 : 1,
                   ),
                 ),
@@ -749,11 +717,7 @@ class _SelectorTemas extends StatelessWidget {
                     ),
                     const Spacer(),
                     if (seleccionado)
-                      Icon(
-                        Icons.check_circle,
-                        color: t.colorScheme.primary,
-                        size: 18,
-                      ),
+                      Icon(Icons.check_circle, color: t.colorScheme.primary, size: 18),
                   ],
                 ),
               ),
@@ -805,7 +769,7 @@ class _CardHerramienta extends StatelessWidget {
 }
 
 // =====================================================================
-// Sub-lista de países/metales personalizados
+// Sub-lista de listas personalizadas
 // =====================================================================
 
 class _SubLista extends StatelessWidget {
@@ -900,9 +864,7 @@ class _LineaAcerca extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
-          child: Text(valor, style: theme.textTheme.bodyMedium),
-        ),
+        Expanded(child: Text(valor, style: theme.textTheme.bodyMedium)),
       ],
     );
   }
