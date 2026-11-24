@@ -100,7 +100,7 @@ class BackupService {
 
     try {
       // 1. Elegir el archivo
-      final resultado = await FilePicker.platform.pickFiles(
+      final resultado = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['zip'],
       );
