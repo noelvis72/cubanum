@@ -290,9 +290,14 @@ class ExportService {
     if (m.grosorMm != null) add('Grosor', '${_numATexto(m.grosorMm!)} mm');
     add('Forma', m.forma);
     add('Canto', m.canto);
-    add('Alineación', m.alineacion);
-    add('Resellada', m.resellada ? 'Sí' : 'No');
-    add('Grado', m.gradoSheldon);
+add('Acabado', m.acabado);
+add('Alineación', m.alineacion);
+add('Resello', m.resellada ? 'Sí' : 'No');
+add('Contramarcada', m.contramarcada ? 'Sí' : 'No');
+add('Notas resello/contramarca', m.notasReselloContramarca);
+add('Variante', m.variante ? 'Sí' : 'No');
+add('Notas variante', m.notasVariante);
+add('Grado', m.gradoSheldon);
     add('Autenticidad', m.autenticidad);
     if (m.precioCompra != null) {
       add('Precio compra', '${_numATexto(m.precioCompra!)} ${m.monedaPrecio}');
@@ -489,6 +494,8 @@ class ExportService {
     final porMetal = <String, int>{};
     final porPais = <String, int>{};
     int reselladas = 0;
+    int contramarcadas = 0;
+    int variantes = 0;
     int conmemorativas = 0;
     int fao = 0;
     int ah = 0;
@@ -506,6 +513,8 @@ class ExportService {
         porPais[m.pais] = (porPais[m.pais] ?? 0) + 1;
       }
       if (m.resellada) reselladas++;
+      if (m.contramarcada) contramarcadas++;
+      if (m.variante) variantes++;
       if (m.conmemorativa) conmemorativas++;
       if (m.fao) fao++;
       if (m.esHejira) ah++;
@@ -620,6 +629,8 @@ class ExportService {
           ),
         seccion('Características especiales', [
           ('Reselladas', '$reselladas'),
+          ('Contramarcadas', '$contramarcadas'),
+          ('Variantes', '$variantes'),
           ('Conmemorativas', '$conmemorativas'),
           ('FAO', '$fao'),
           ('Hégira (AH)', '$ah'),
@@ -681,8 +692,13 @@ class ExportService {
       ('Metal', (m) => m.metal, 'text'),
       ('Ley', (m) => m.ley, 'text'),
       ('Canto', (m) => m.canto, 'text'),
+      ('Acabado', (m) => m.acabado, 'text'),
       ('Alineación', (m) => m.alineacion, 'text'),
-      ('Resellada', (m) => m.resellada ? 'Sí' : 'No', 'text'),
+      ('Resello', (m) => m.resellada ? 'Sí' : 'No', 'text'),
+      ('Contramarcada', (m) => m.contramarcada ? 'Sí' : 'No', 'text'),
+      ('Notas resello/contramarca', (m) => m.notasReselloContramarca, 'text'),
+      ('Variante', (m) => m.variante ? 'Sí' : 'No', 'text'),
+      ('Notas variante', (m) => m.notasVariante, 'text'),
       ('Grado Sheldon', (m) => m.gradoSheldon, 'text'),
       ('Detalles visibles', (m) => m.detallesVisibles, 'text'),
       ('Autenticidad', (m) => m.autenticidad, 'text'),
