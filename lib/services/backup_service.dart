@@ -72,7 +72,7 @@ class BackupService {
       }
 
       // Abrir el diálogo nativo "Guardar como"
-      final uri = await FilePicker.platform.saveFile(
+      final uri = await FilePicker.saveFile(
         dialogTitle: 'Guardar copia de seguridad de CUBANUM',
         fileName: nombre,
         bytes: Uint8List.fromList(zipData),
