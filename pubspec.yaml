@@ -29,7 +29,7 @@ dependencies:
   printing: ^5.13.1
   syncfusion_flutter_xlsio: ^35.0.0
   share_plus: ^10.1.4
-  archive: ^4.6.0
+  # archive: ^4.6.0 # comentado a ver que pasa
   file_picker: 8.1.6
   # misri_hijri: ^0.1.7 #comentado a ver que pasa
   hijri_plus: ^0.1.0
