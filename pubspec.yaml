@@ -21,17 +21,17 @@ dependencies:
   shared_preferences: ^2.2.3
 
   # Multimedia
-  image_picker: ^1.1.2
-  # camera: ^0.11.0 #comentado a ver que pasa
+  image_picker: any
+  camera: any
   
   # Exportación y compartir
   pdf: ^3.11.0
   printing: ^5.13.1
   syncfusion_flutter_xlsio: ^35.0.0
-  share_plus: ^10.1.4
-  # archive: ^4.6.0 # comentado a ver que pasa
-  file_picker: 8.1.6
-  # misri_hijri: ^0.1.7 #comentado a ver que pasa
+  share_plus: any
+  archive: any
+  file_picker: any
+  misri_hijri: any
   hijri_plus: ^0.1.0
   flutter_expandable_table: ^2.3.0
 
