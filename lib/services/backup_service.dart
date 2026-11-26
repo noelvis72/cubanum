@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
-// import 'package:file_picker/file_picker.dart';   // COMENTADO TEMPORALMENTE
+import 'package:file_picker/file_picker.dart'; 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -96,12 +96,11 @@ class BackupService {
   /// Restaura un backup desde un ZIP elegido por el usuario.
   /// Devuelve true si la restauración fue exitosa.
   static Future<bool> restaurarBackup() async {
-    /*
     bool exito = false;
 
     try {
       // 1. Elegir el archivo
-      final resultado = await FilePicker.pickFiles(
+      final resultado = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['zip'],
       );
@@ -187,8 +186,6 @@ class BackupService {
     }
 
     return exito;
-  */
-    return false
     }
 
   /// Devuelve la fecha de la última salva, o null si no hay.
