@@ -22,7 +22,7 @@ dependencies:
 
   # Multimedia
   image_picker: ^1.1.2
-  camera: ^0.11.0
+  # camera: ^0.11.0 #comentado a ver que pasa
   
   # Exportación y compartir
   pdf: ^3.11.0
@@ -31,7 +31,7 @@ dependencies:
   share_plus: ^10.1.4
   archive: ^4.6.0
   file_picker: 8.1.6
-  misri_hijri: ^0.1.7
+  # misri_hijri: ^0.1.7 #comentado a ver que pasa
   hijri_plus: ^0.1.0
   flutter_expandable_table: ^2.3.0
 
