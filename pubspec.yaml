@@ -61,4 +61,5 @@ flutter:
     - assets/icon/
 
 dependency_overrides:
- flutter_plugin_android_lifecycle: ^2.0.30
+  flutter_plugin_android_lifecycle: ^2.0.30
+  camera: ^0.11.3
