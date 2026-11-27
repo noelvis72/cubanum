@@ -10,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../db/database_helper.dart';
 import '../models/moneda.dart';
 import '../widgets/bottom_sheet_filtro.dart';
-import 'camara_screen.dart';
+# import 'camara_screen.dart';  # comentario 
 
 class FormScreen extends StatefulWidget {
   final Moneda? moneda;
@@ -409,7 +409,7 @@ class _FormScreenState extends State<FormScreen> {
     });
   }
 
-  Future<void> _tomarFotoConCamara(String cual) async {
+  # Future<void> _tomarFotoConCamara(String cual) async {  # comentario 
     final ruta = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => const CamaraScreen()),
