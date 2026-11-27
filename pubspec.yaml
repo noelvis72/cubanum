@@ -61,4 +61,4 @@ flutter:
     - assets/icon/
 
 dependency_overrides:
- flutter_plugin_android_lifecycle: ^2.0.28
+ flutter_plugin_android_lifecycle: ^2.0.30
